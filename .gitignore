@@ -1,41 +1,21 @@
+# Dependencies
 node_modules/
+
+# Environment variables
 .env
+
+# Logs
+*.log
+
+# OS files
 .DS_Store
 Thumbs.db
 
-**/node_modules/
-**/npm-debug.log
-**/yarn-error.log
-
-*.log
-
-# MS2 Plan (excluded from repo)
-MS2_PLAN.md
-
-# LaTeX Template (excluded from repo)
-Template MS2 2025W - Latex/
-
-# Common ignores
-node_modules/
-*.log
-.DS_Store
-.env
+# Editor temp files
 *.swp
 *.swo
 *~
 
-# Build artifacts
-dist/
-build/
-*.class
-*.jar
-*.war
-
-# IDE
-.idea/
-.vscode/
-*.iml
-
-# OS
-Thumbs.db
-.DS_Store
+# Project-specific excludes
+MS2_PLAN.md
+Template MS2 2025W - Latex/
