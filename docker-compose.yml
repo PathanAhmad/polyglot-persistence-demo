@@ -1,0 +1,42 @@
+services:
+  mariadb:
+    image: mariadb:11
+    environment:
+      MARIADB_ROOT_PASSWORD: rootpass
+      MARIADB_DATABASE: ms2
+      MARIADB_USER: ms2
+      MARIADB_PASSWORD: ms2pass
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+  mongodb:
+    image: mongo:7
+    environment:
+      MONGO_INITDB_DATABASE: ms2
+    volumes:
+      - mongo_data:/data/db
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      PORT: 3000
+      MARIADB_HOST: mariadb
+      MARIADB_PORT: 3306
+      MARIADB_USER: ms2
+      MARIADB_PASSWORD: ms2pass
+      MARIADB_DATABASE: ms2
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DB: ms2
+      SCHEMA_SQL_PATH: /app/db/schema.sql
+    depends_on:
+      - mariadb
+      - mongodb
+    ports:
+      - "3000:3000"
+
+volumes:
+  mariadb_data:
+  mongo_data:
+

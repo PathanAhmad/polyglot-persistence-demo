@@ -1,3 +1,14 @@
+node_modules/
+.env
+.DS_Store
+Thumbs.db
+
+**/node_modules/
+**/npm-debug.log
+**/yarn-error.log
+
+*.log
+
 # MS2 Plan (excluded from repo)
 MS2_PLAN.md
 
