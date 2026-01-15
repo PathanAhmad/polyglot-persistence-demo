@@ -5,28 +5,28 @@ Complete food delivery system with dual-database support (MariaDB + MongoDB) imp
 
 ## Quick Compliance Check
 
-### ✅ 2.1 Infrastructure (3/3 points)
-- [x] Containerized (Docker Compose)
-- [x] No local bind mounts (removed for submission)
-- [x] README with setup instructions
-- [x] Minimal setup: `docker compose up --build` only
+### 2.1 Infrastructure (3/3 points)
+- Containerized (Docker Compose)
+- No local bind mounts (removed for submission)
+- README with setup instructions
+- Minimal setup: `docker compose up --build` only
 
-### ✅ 2.2 RDBMS Implementation (9/9 points)
-- [x] DB-filling script with randomized data (importReset.js)
-- [x] Import button in GUI (Admin section)
-- [x] MariaDB connection verified (GET /api/health)
-- [x] Student 1 use case: Place Order → Pay → Report (SQL)
-- [x] Student 2 use case: Assign Delivery → Report (SQL)
-- [x] Improved UX with dropdowns (no raw ID fields)
+### 2.2 RDBMS Implementation (9/9 points)
+- DB-filling script with randomized data (importReset.js)
+- Import button in GUI (Admin section)
+- MariaDB connection verified (GET /api/health)
+- Student 1 use case: Place Order → Pay → Report (SQL)
+- Student 2 use case: Assign Delivery → Report (SQL)
+- Improved UX with dropdowns (no raw ID fields)
 
-### ✅ 2.3 NoSQL Implementation (16/16 points)
-- [x] NoSQL design document (NOSQL_DESIGN.md)
-- [x] Design justification with alternatives
-- [x] MongoDB migration endpoint + GUI button
-- [x] Student 1 & 2 use cases in Mongo mode
-- [x] MongoShell query syntax documented
-- [x] Comprehensive indexing strategy (9 indexes)
-- [x] Execution stats showing 20-50x performance improvement
+### 2.3 NoSQL Implementation (16/16 points)
+- NoSQL design document (NOSQL_DESIGN.md)
+- Design justification with alternatives
+- MongoDB migration endpoint + GUI button
+- Student 1 & 2 use cases in Mongo mode
+- MongoShell query syntax documented
+- Comprehensive indexing strategy (9 indexes)
+- Execution stats showing 20-50x performance improvement
 
 **Total: 28/28 points**
 
@@ -161,26 +161,26 @@ orders: {
 ## Important Notes for Evaluators
 
 ### Infrastructure
-- ✅ **No local bind mounts** - Removed from docker-compose.yml (production-ready)
-- ✅ **Clean deployment** - Single command `docker compose up --build`
-- ✅ **Proper .gitignore** - Only source code committed, no build artifacts
+- **No local bind mounts** - Removed from docker-compose.yml (production-ready)
+- **Clean deployment** - Single command `docker compose up --build`
+- **Proper .gitignore** - Only source code committed, no build artifacts
 
 ### RDBMS
-- ✅ **MariaDB not SQLite** - Uses proper production database
-- ✅ **Randomized data** - 20-30 records per table, seeded for consistency
-- ✅ **Dropdown UI** - Not ID-focused, shows names + emails
-- ✅ **Reports work dynamically** - Data changes reflected in real-time
+- **MariaDB not SQLite** - Uses proper production database
+- **Randomized data** - 20-30 records per table, seeded for consistency
+- **Dropdown UI** - Not ID-focused, shows names + emails
+- **Reports work dynamically** - Data changes reflected in real-time
 
 ### NoSQL
-- ✅ **Design document** - NOSQL_DESIGN.md explains all decisions
-- ✅ **No ORM libraries** - Raw MongoDB driver for proper denormalization
-- ✅ **Migration verified** - Data counts match between SQL→Mongo
-- ✅ **Indexing implemented** - 9 strategic indexes with execution stats
+- **Design document** - NOSQL_DESIGN.md explains all decisions
+- **No ORM libraries** - Raw MongoDB driver for proper denormalization
+- **Migration verified** - Data counts match between SQL→Mongo
+- **Indexing implemented** - 9 strategic indexes with execution stats
 
 ### Both Modes
-- ✅ **Feature parity** - Same operations work identically in SQL/Mongo
-- ✅ **Error handling** - Displays backend errors with stack traces
-- ✅ **Responsive UI** - Clean, intuitive interface with helpful feedback
+- **Feature parity** - Same operations work identically in SQL/Mongo
+- **Error handling** - Displays backend errors with stack traces
+- **Responsive UI** - Clean, intuitive interface with helpful feedback
 
 ---
 
@@ -230,17 +230,17 @@ orders: {
 Student 1 Report Query:
   Before: COLLSCAN 30 docs → ~45ms
   After:  IXSCAN 5 docs   → ~2ms
-  Improvement: 22x faster ✓
+  Improvement: 22x faster
 
 Student 2 Report Query:
   Before: COLLSCAN 30 docs → ~50ms
   After:  IXSCAN 3 docs    → ~1ms
-  Improvement: 50x faster ✓
+  Improvement: 50x faster
 
 Order Placement:
   Before: 2 COLLSCAN → ~30ms
   After:  2 IXSCAN   → ~0.5ms
-  Improvement: 60x faster ✓
+  Improvement: 60x faster
 ```
 
 ---

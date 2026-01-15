@@ -109,213 +109,227 @@ function Student2Section() {
   }
 
   return (
-    <div className="section">
-      <h2>Student 2 - Assign Rider & Delivery Status</h2>
-      
-      <div className="tabs">
-        <button 
-          className={`tab ${mode === 'sql' ? 'active' : ''}`}
-          onClick={() => setMode('sql')}
-        >
-          SQL Mode
-        </button>
-        <button 
-          className={`tab ${mode === 'mongo' ? 'active' : ''}`}
-          onClick={() => setMode('mongo')}
-        >
-          Mongo Mode
-        </button>
-      </div>
+    <div className="card mb-4">
+      <div className="card-body">
+        <h2 className="card-title">Student 2 - Assign Rider & Delivery Status</h2>
+        
+        <ul className="nav nav-tabs mb-4">
+          <li className="nav-item">
+            <button 
+              className={`nav-link ${mode === 'sql' ? 'active' : ''}`}
+              onClick={() => setMode('sql')}
+            >
+              SQL Mode
+            </button>
+          </li>
+          <li className="nav-item">
+            <button 
+              className={`nav-link ${mode === 'mongo' ? 'active' : ''}`}
+              onClick={() => setMode('mongo')}
+            >
+              Mongo Mode
+            </button>
+          </li>
+        </ul>
 
-      {/* Assign Delivery Form */}
-      <form onSubmit={handleAssignDelivery}>
-        <h3>Assign Delivery</h3>
-        
-        <div className="form-group">
-          <label>Rider Email</label>
-          <select
-            value={assignForm.riderEmail}
-            onChange={(e) => setAssignForm({ ...assignForm, riderEmail: e.target.value })}
-            required
-          >
-            <option value="">Select a rider...</option>
-            {riders.map(rider => (
-              <option key={rider.email} value={rider.email}>
-                {rider.name} ({rider.email})
-              </option>
-            ))}
-          </select>
-          <small style={{ display: 'block', marginTop: '5px', color: '#666' }}>
-            Or type manually:
-          </small>
-          <input
-            type="email"
-            value={assignForm.riderEmail}
-            onChange={(e) => setAssignForm({ ...assignForm, riderEmail: e.target.value })}
-            placeholder="rider1@example.com (rider1-10)"
-            required
-          />
-        </div>
-        
-        <div className="form-group">
-          <label>Order ID</label>
-          <select
-            value={assignForm.orderId}
-            onChange={(e) => setAssignForm({ ...assignForm, orderId: e.target.value })}
-            required
-          >
-            <option value="">Select an order...</option>
-            {orders.map(order => (
-              <option key={order.orderId} value={order.orderId}>
-                Order #{order.orderId} - {order.status || 'created'}
-              </option>
-            ))}
-          </select>
-          <small style={{ display: 'block', marginTop: '5px', color: '#666' }}>
-            Or type manually:
-          </small>
-          <input
-            type="number"
-            value={assignForm.orderId}
-            onChange={(e) => setAssignForm({ ...assignForm, orderId: e.target.value })}
-            placeholder="Order ID"
-            required
-          />
-        </div>
-        
-        <div className="form-group">
-          <label>Delivery Status</label>
-          <select
-            value={assignForm.deliveryStatus}
-            onChange={(e) => setAssignForm({ ...assignForm, deliveryStatus: e.target.value })}
-            required
-          >
-            <option value="assigned">Assigned</option>
-            <option value="picked_up">Picked Up</option>
-            <option value="delivered">Delivered</option>
-          </select>
-        </div>
+        {/* Assign Delivery Form */}
+        <form onSubmit={handleAssignDelivery}>
+          <h3 className="h5 mb-3">Assign Delivery</h3>
+          
+          <div className="mb-3">
+            <label className="form-label">Rider Email</label>
+            <select
+              className="form-select"
+              value={assignForm.riderEmail}
+              onChange={(e) => setAssignForm({ ...assignForm, riderEmail: e.target.value })}
+              required
+            >
+              <option value="">Select a rider...</option>
+              {riders.map(rider => (
+                <option key={rider.email} value={rider.email}>
+                  {rider.name} ({rider.email})
+                </option>
+              ))}
+            </select>
+            <div className="form-text">Or type manually:</div>
+            <input
+              type="email"
+              className="form-control mt-1"
+              value={assignForm.riderEmail}
+              onChange={(e) => setAssignForm({ ...assignForm, riderEmail: e.target.value })}
+              placeholder="rider1@example.com (rider1-10)"
+              required
+            />
+          </div>
+          
+          <div className="mb-3">
+            <label className="form-label">Order ID</label>
+            <select
+              className="form-select"
+              value={assignForm.orderId}
+              onChange={(e) => setAssignForm({ ...assignForm, orderId: e.target.value })}
+              required
+            >
+              <option value="">Select an order...</option>
+              {orders.map(order => (
+                <option key={order.orderId} value={order.orderId}>
+                  Order #{order.orderId} - {order.status || 'created'}
+                </option>
+              ))}
+            </select>
+            <div className="form-text">Or type manually:</div>
+            <input
+              type="number"
+              className="form-control mt-1"
+              value={assignForm.orderId}
+              onChange={(e) => setAssignForm({ ...assignForm, orderId: e.target.value })}
+              placeholder="Order ID"
+              required
+            />
+          </div>
+          
+          <div className="mb-3">
+            <label className="form-label">Delivery Status</label>
+            <select
+              className="form-select"
+              value={assignForm.deliveryStatus}
+              onChange={(e) => setAssignForm({ ...assignForm, deliveryStatus: e.target.value })}
+              required
+            >
+              <option value="assigned">Assigned</option>
+              <option value="picked_up">Picked Up</option>
+              <option value="delivered">Delivered</option>
+            </select>
+          </div>
 
-        <button type="submit" disabled={loading}>Assign Delivery</button>
-      </form>
+          <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading ? 'Assigning...' : 'Assign Delivery'}
+          </button>
+        </form>
 
-      {assignResult && (
-        <div className={`result ${assignResult.success ? 'success' : 'error'}`}>
-          {assignResult.success ? (
-            <>
-              <div>✓ Delivery assigned successfully!</div>
-              <pre>{JSON.stringify(assignResult.data, null, 2)}</pre>
-            </>
-          ) : (
-            <>
-              <div>✗ Error: {assignResult.error.error}</div>
-              {assignResult.error.stack && <pre>{assignResult.error.stack}</pre>}
-            </>
-          )}
-        </div>
-      )}
+        {assignResult && (
+          <div className={`alert mt-3 ${assignResult.success ? 'alert-success' : 'alert-danger'}`}>
+            {assignResult.success ? (
+              <>
+                <div>Delivery assigned successfully!</div>
+                <pre className="mt-2 mb-0">{JSON.stringify(assignResult.data, null, 2)}</pre>
+              </>
+            ) : (
+              <>
+                <div>✗ Error: {assignResult.error.error}</div>
+                {assignResult.error.stack && <pre className="mt-2 mb-0">{assignResult.error.stack}</pre>}
+              </>
+            )}
+          </div>
+        )}
 
-      {/* Report Form */}
-      <form onSubmit={handleReport} style={{ marginTop: '30px' }}>
-        <h3>Student 2 Report</h3>
-        
-        <div className="form-group">
-          <label>Rider Email (required)</label>
-          <select
-            value={reportForm.riderEmail}
-            onChange={(e) => setReportForm({ ...reportForm, riderEmail: e.target.value })}
-          >
-            <option value="">Select a rider...</option>
-            {riders.map(rider => (
-              <option key={rider.email} value={rider.email}>
-                {rider.name} ({rider.email})
-              </option>
-            ))}
-          </select>
-          <small style={{ display: 'block', marginTop: '5px', color: '#666' }}>
-            Or type manually:
-          </small>
-          <input
-            type="email"
-            value={reportForm.riderEmail}
-            onChange={(e) => setReportForm({ ...reportForm, riderEmail: e.target.value })}
-            placeholder="rider1@example.com (rider1-10)"
-            required
-          />
-        </div>
-        
-        <div className="form-group">
-          <label>From (optional)</label>
-          <input
-            type="datetime-local"
-            value={reportForm.from}
-            onChange={(e) => setReportForm({ ...reportForm, from: e.target.value })}
-          />
-        </div>
-        
-        <div className="form-group">
-          <label>To (optional)</label>
-          <input
-            type="datetime-local"
-            value={reportForm.to}
-            onChange={(e) => setReportForm({ ...reportForm, to: e.target.value })}
-          />
-        </div>
-        
-        <div className="form-group">
-          <label>Delivery Status (optional)</label>
-          <select
-            value={reportForm.deliveryStatus}
-            onChange={(e) => setReportForm({ ...reportForm, deliveryStatus: e.target.value })}
-          >
-            <option value="">All statuses</option>
-            <option value="assigned">Assigned</option>
-            <option value="picked_up">Picked Up</option>
-            <option value="delivered">Delivered</option>
-          </select>
-        </div>
+        {/* Report Form */}
+        <form onSubmit={handleReport} className="mt-4 pt-4 border-top">
+          <h3 className="h5 mb-3">Student 2 Report</h3>
+          
+          <div className="mb-3">
+            <label className="form-label">Rider Email (required)</label>
+            <select
+              className="form-select"
+              value={reportForm.riderEmail}
+              onChange={(e) => setReportForm({ ...reportForm, riderEmail: e.target.value })}
+            >
+              <option value="">Select a rider...</option>
+              {riders.map(rider => (
+                <option key={rider.email} value={rider.email}>
+                  {rider.name} ({rider.email})
+                </option>
+              ))}
+            </select>
+            <div className="form-text">Or type manually:</div>
+            <input
+              type="email"
+              className="form-control mt-1"
+              value={reportForm.riderEmail}
+              onChange={(e) => setReportForm({ ...reportForm, riderEmail: e.target.value })}
+              placeholder="rider1@example.com (rider1-10)"
+              required
+            />
+          </div>
+          
+          <div className="mb-3">
+            <label className="form-label">From (optional)</label>
+            <input
+              type="datetime-local"
+              className="form-control"
+              value={reportForm.from}
+              onChange={(e) => setReportForm({ ...reportForm, from: e.target.value })}
+            />
+          </div>
+          
+          <div className="mb-3">
+            <label className="form-label">To (optional)</label>
+            <input
+              type="datetime-local"
+              className="form-control"
+              value={reportForm.to}
+              onChange={(e) => setReportForm({ ...reportForm, to: e.target.value })}
+            />
+          </div>
+          
+          <div className="mb-3">
+            <label className="form-label">Delivery Status (optional)</label>
+            <select
+              className="form-select"
+              value={reportForm.deliveryStatus}
+              onChange={(e) => setReportForm({ ...reportForm, deliveryStatus: e.target.value })}
+            >
+              <option value="">All statuses</option>
+              <option value="assigned">Assigned</option>
+              <option value="picked_up">Picked Up</option>
+              <option value="delivered">Delivered</option>
+            </select>
+          </div>
 
-        <button type="submit" disabled={loading}>Get Report</button>
-      </form>
+          <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading ? 'Generating Report...' : 'Get Report'}
+          </button>
+        </form>
 
-      {reportResult && (
-        <div className={`result ${reportResult.success ? 'success' : 'error'}`}>
-          {reportResult.success ? (
-            <>
-              <div>✓ Report generated</div>
-              {reportResult.data.rows && reportResult.data.rows.length > 0 ? (
-                <div className="table-wrapper">
-                  <table>
-                    <thead>
-                      <tr>
-                        {Object.keys(reportResult.data.rows[0]).map(key => (
-                          <th key={key}>{key}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {reportResult.data.rows.map((row, idx) => (
-                        <tr key={idx}>
-                          {Object.values(row).map((val, i) => (
-                            <td key={i}>{JSON.stringify(val)}</td>
+        {reportResult && (
+          <div className={`alert mt-3 ${reportResult.success ? 'alert-success' : 'alert-danger'}`}>
+            {reportResult.success ? (
+              <>
+                <div>Report generated</div>
+                {reportResult.data.rows && reportResult.data.rows.length > 0 ? (
+                  <div className="table-responsive mt-3">
+                    <table className="table table-striped table-bordered table-hover">
+                      <thead className="table-dark">
+                        <tr>
+                          {Object.keys(reportResult.data.rows[0]).map(key => (
+                            <th key={key}>{key}</th>
                           ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div>No data found</div>
-              )}
-            </>
-          ) : (
-            <>
-              <div>✗ Error: {reportResult.error.error}</div>
-              {reportResult.error.stack && <pre>{reportResult.error.stack}</pre>}
-            </>
-          )}
-        </div>
-      )}
+                      </thead>
+                      <tbody>
+                        {reportResult.data.rows.map((row, idx) => (
+                          <tr key={idx}>
+                            {Object.values(row).map((val, i) => (
+                              <td key={i}>{JSON.stringify(val)}</td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="mt-2">No data found</div>
+                )}
+              </>
+            ) : (
+              <>
+                <div>✗ Error: {reportResult.error.error}</div>
+                {reportResult.error.stack && <pre className="mt-2 mb-0">{reportResult.error.stack}</pre>}
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

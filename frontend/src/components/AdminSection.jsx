@@ -55,80 +55,82 @@ function AdminSection() {
   }
 
   return (
-    <div className="section">
-      <h2>Admin / Setup</h2>
-      
-      <div style={{ background: '#fff3cd', border: '1px solid #ffc107', padding: '15px', borderRadius: '4px', marginBottom: '20px' }}>
-        <strong>⚠️ First Time Setup:</strong> Click "Import & Reset Data" below to initialize the database before using Student 1 or Student 2 features.
-      </div>
-      
-      <div className="form-group">
-        <h3>Health Check</h3>
-        <button onClick={handleHealthCheck} disabled={loading}>
-          Check Health
-        </button>
-        {healthStatus && (
-          <div className={`result ${healthStatus.success ? 'success' : 'error'}`}>
-            {healthStatus.success ? (
-              <div>✓ {healthStatus.data.message || 'OK'}</div>
-            ) : (
-              <>
-                <div>✗ Error: {healthStatus.error.error}</div>
-                {healthStatus.error.stack && (
-                  <pre>{healthStatus.error.stack}</pre>
-                )}
-              </>
-            )}
-          </div>
-        )}
-      </div>
+    <div className="card mb-4">
+      <div className="card-body">
+        <h2 className="card-title">Admin / Setup</h2>
+        
+        <div className="alert alert-warning" role="alert">
+          <strong>⚠️ First Time Setup:</strong> Click "Import & Reset Data" below to initialize the database before using Student 1 or Student 2 features.
+        </div>
+        
+        <div className="mb-4">
+          <h3 className="h5">Health Check</h3>
+          <button className="btn btn-primary" onClick={handleHealthCheck} disabled={loading}>
+            {loading ? 'Checking...' : 'Check Health'}
+          </button>
+          {healthStatus && (
+            <div className={`alert mt-3 ${healthStatus.success ? 'alert-success' : 'alert-danger'}`}>
+              {healthStatus.success ? (
+                <div>{healthStatus.data.message || 'OK'}</div>
+              ) : (
+                <>
+                  <div>✗ Error: {healthStatus.error.error}</div>
+                  {healthStatus.error.stack && (
+                    <pre className="mt-2 mb-0">{healthStatus.error.stack}</pre>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
 
-      <div className="form-group">
-        <h3>Import / Reset (MariaDB)</h3>
-        <button onClick={handleImportReset} disabled={loading} className="secondary">
-          Import & Reset Data
-        </button>
-        {importResult && (
-          <div className={`result ${importResult.success ? 'success' : 'error'}`}>
-            {importResult.success ? (
-              <>
-                <div>✓ Import successful!</div>
-                <pre>{JSON.stringify(importResult.data, null, 2)}</pre>
-              </>
-            ) : (
-              <>
-                <div>✗ Error: {importResult.error.error}</div>
-                {importResult.error.stack && (
-                  <pre>{importResult.error.stack}</pre>
-                )}
-              </>
-            )}
-          </div>
-        )}
-      </div>
+        <div className="mb-4">
+          <h3 className="h5">Import / Reset (MariaDB)</h3>
+          <button className="btn btn-secondary" onClick={handleImportReset} disabled={loading}>
+            {loading ? 'Importing...' : 'Import & Reset Data'}
+          </button>
+          {importResult && (
+            <div className={`alert mt-3 ${importResult.success ? 'alert-success' : 'alert-danger'}`}>
+              {importResult.success ? (
+                <>
+                  <div>Import successful!</div>
+                  <pre className="mt-2 mb-0">{JSON.stringify(importResult.data, null, 2)}</pre>
+                </>
+              ) : (
+                <>
+                  <div>✗ Error: {importResult.error.error}</div>
+                  {importResult.error.stack && (
+                    <pre className="mt-2 mb-0">{importResult.error.stack}</pre>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
 
-      <div className="form-group">
-        <h3>Migrate SQL → Mongo</h3>
-        <button onClick={handleMigrate} disabled={loading} className="success">
-          Migrate to MongoDB
-        </button>
-        {migrateResult && (
-          <div className={`result ${migrateResult.success ? 'success' : 'error'}`}>
-            {migrateResult.success ? (
-              <>
-                <div>✓ Migration successful!</div>
-                <pre>{JSON.stringify(migrateResult.data, null, 2)}</pre>
-              </>
-            ) : (
-              <>
-                <div>✗ Error: {migrateResult.error.error}</div>
-                {migrateResult.error.stack && (
-                  <pre>{migrateResult.error.stack}</pre>
-                )}
-              </>
-            )}
-          </div>
-        )}
+        <div className="mb-4">
+          <h3 className="h5">Migrate SQL → Mongo</h3>
+          <button className="btn btn-success" onClick={handleMigrate} disabled={loading}>
+            {loading ? 'Migrating...' : 'Migrate to MongoDB'}
+          </button>
+          {migrateResult && (
+            <div className={`alert mt-3 ${migrateResult.success ? 'alert-success' : 'alert-danger'}`}>
+              {migrateResult.success ? (
+                <>
+                  <div>Migration successful!</div>
+                  <pre className="mt-2 mb-0">{JSON.stringify(migrateResult.data, null, 2)}</pre>
+                </>
+              ) : (
+                <>
+                  <div>✗ Error: {migrateResult.error.error}</div>
+                  {migrateResult.error.stack && (
+                    <pre className="mt-2 mb-0">{migrateResult.error.stack}</pre>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
