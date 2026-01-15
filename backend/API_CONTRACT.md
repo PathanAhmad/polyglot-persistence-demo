@@ -68,7 +68,7 @@ Query params:
 {
   "ok": true,
   "orders": [
-    { "orderId": 101, "createdAt": "2026-01-14T10:00:00.000Z", "status": "created", "totalAmount": 24.5, "restaurantName": "Pasta Place" }
+    { "orderId": 101, "createdAt": "2026-01-14T10:00:00.000Z", "status": "created", "totalAmount": 24.5, "restaurantName": "Plachutta" }
   ]
 }
 ```
@@ -84,7 +84,7 @@ Request body:
 ```json
 {
   "customerEmail": "customer1@example.com",
-  "restaurantName": "Pasta Place",
+  "restaurantName": "Plachutta",
   "items": [
     { "menuItemId": 1, "quantity": 2 },
     { "menuItemName": "Item 5", "quantity": 1 }
@@ -102,7 +102,7 @@ Request body:
     "createdAt": "2026-01-14T10:00:00.000Z",
     "status": "created",
     "totalAmount": 24.5,
-    "restaurant": { "name": "Pasta Place", "address": "10 Main St" },
+    "restaurant": { "name": "Plachutta", "address": "Kaerntner Strasse 10, 1010 Wien" },
     "customer": { "name": "Customer 1", "email": "customer1@example.com" },
     "orderItems": [
       { "menuItemId": 1, "name": "Item 1", "quantity": 2, "unitPrice": 9.5 }
@@ -153,7 +153,7 @@ Query params:
   "ok": true,
   "rows": [
     {
-      "restaurantName": "Pasta Place",
+      "restaurantName": "Plachutta",
       "orderId": 101,
       "orderCreatedAt": "2026-01-14T10:00:00.000Z",
       "status": "preparing",
@@ -179,7 +179,7 @@ Request body:
 ```json
 {
   "customerEmail": "customer1@example.com",
-  "restaurantName": "Pasta Place",
+  "restaurantName": "Plachutta",
   "items": [
     { "menuItemId": 1, "name": "Item 1", "quantity": 2, "unitPrice": 9.5 }
   ]
@@ -273,7 +273,7 @@ Query params:
       "orderId": 101,
       "orderCreatedAt": "2026-01-14T10:00:00.000Z",
       "totalAmount": 24.5,
-      "restaurantName": "Pasta Place"
+      "restaurantName": "Plachutta"
     }
   ]
 }

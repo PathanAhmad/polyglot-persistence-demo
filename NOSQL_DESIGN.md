@@ -140,7 +140,7 @@ db.people.findOne({ type: "rider", email: "rider1@example.com" })
 
 ```javascript
 db.orders.find({
-  "restaurant.name": "Pasta Place",
+  "restaurant.name": "Plachutta",
   createdAt: { $gte: ISODate("2026-01-01"), $lte: ISODate("2026-01-31") }
 }).sort({ createdAt: -1 })
 ```
@@ -192,7 +192,7 @@ Student 1 report example:
 
 ```javascript
 db.orders.find({
-  "restaurant.name": "Pasta Place"
+  "restaurant.name": "Plachutta"
 }).sort({ createdAt: -1 }).explain("executionStats")
 ```
 
