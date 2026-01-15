@@ -1,4 +1,4 @@
-# IMSE MS2 — Food Delivery System
+# IMSE MS2 - Food Delivery System
 
 We built a small food delivery demo that works in **two modes**:
 
@@ -19,12 +19,17 @@ When we run Docker Compose, we start 4 containers:
 - **Backend** (Node.js + Express) on port **3000**
 - **Frontend** (React + Vite) on port **5173**
 
-After it’s running:
+After it's running:
 - **Frontend:** `http://localhost:5173`
 - **Backend API:** `http://localhost:3000/api`
 
 ### First-time demo setup (from the UI)
-In the frontend, go to the **Admin** section and run:
+In the frontend, open the **Admin** tab.
+
+**Admin demo login (frontend-only):**
+- **Access code:** `imse-ms2`
+
+Then run:
 - **Check Health** (pings MariaDB + ensures Mongo indexes exist)
 - **Import & Reset Data** (creates schema + inserts demo data)
 - **Migrate to MongoDB** (copies the SQL snapshot into MongoDB)
@@ -68,7 +73,7 @@ docker compose logs -f frontend
 - The **frontend** calls the **backend** at `/api/...`.
 - The backend talks to **MariaDB** for SQL mode endpoints.
 - For Mongo mode endpoints, the backend talks to **MongoDB**.
-- The **migration** endpoint reads a full snapshot from MariaDB and writes it into MongoDB (we don’t “dual write”).
+- The **migration** endpoint reads a full snapshot from MariaDB and writes it into MongoDB (we don't "dual write").
 
 ### Repo layout (main folders)
 - `frontend/`: React UI (Vite dev server in Docker)

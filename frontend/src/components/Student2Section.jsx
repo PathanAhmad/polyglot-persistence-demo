@@ -216,7 +216,7 @@ function Student2Section() {
               </>
             ) : (
               <>
-                <div>✗ Error: {assignResult.error.error}</div>
+                <div>Error: {assignResult.error.error}</div>
                 {assignResult.error.stack && <pre className="mt-2 mb-0">{assignResult.error.stack}</pre>}
               </>
             )}
@@ -323,7 +323,7 @@ function Student2Section() {
               </>
             ) : (
               <>
-                <div>✗ Error: {reportResult.error.error}</div>
+                <div>Error: {reportResult.error.error}</div>
                 {reportResult.error.stack && <pre className="mt-2 mb-0">{reportResult.error.stack}</pre>}
               </>
             )}

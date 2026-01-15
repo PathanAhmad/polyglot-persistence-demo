@@ -48,7 +48,7 @@ function centsToAmount(cents) {
 }
 
 // -------------------------
-// Student 1 — SQL (MariaDB)
+// Student 1 - SQL (MariaDB)
 // Use case: Place order + pay
 // -------------------------
 
@@ -308,7 +308,7 @@ student1Router.get("/student1/sql/report", async (req, res, next) => {
 });
 
 // -------------------------
-// Student 1 — MongoDB
+// Student 1 - MongoDB
 // Use case: Place order + pay
 // -------------------------
 

@@ -73,7 +73,7 @@ Query params:
 }
 ```
 
-## Student 1 — SQL (MariaDB)
+## Student 1 - SQL (MariaDB)
 
 ### POST `/api/student1/sql/place_order`
 
@@ -113,7 +113,7 @@ Request body:
 
 ### POST `/api/student1/sql/pay`
 
-I create (or finalize) the payment for an order and update the order status from `created` → `preparing`.
+I create (or finalize) the payment for an order and update the order status from `created` -> `preparing`.
 
 Request body:
 
@@ -168,7 +168,7 @@ Query params:
 }
 ```
 
-## Student 1 — MongoDB
+## Student 1 - MongoDB
 
 ### POST `/api/student1/mongo/place_order`
 
@@ -206,11 +206,11 @@ Same JSON body as the SQL endpoint.
 
 Same query params and same output shape as the SQL report (as close as practical).
 
-## Student 2 — SQL (MariaDB)
+## Student 2 - SQL (MariaDB)
 
 ### POST `/api/student2/sql/assign_delivery`
 
-I assign a rider to an order’s delivery (create delivery if missing) and update the delivery status.
+I assign a rider to an order's delivery (create delivery if missing) and update the delivery status.
 
 Request body:
 
@@ -279,7 +279,7 @@ Query params:
 }
 ```
 
-## Migration (SQL → MongoDB)
+## Migration (SQL -> MongoDB)
 
 ### POST `/api/migrate_to_mongo`
 
@@ -298,7 +298,7 @@ I clear MongoDB collections and migrate the current MariaDB data into MongoDB do
 }
 ```
 
-## Student 2 — MongoDB
+## Student 2 - MongoDB
 
 ### POST `/api/student2/mongo/assign_delivery`
 

@@ -349,7 +349,7 @@ function Student1Section() {
                   />
                 </div>
                 <div className="col-md-1">
-                  <button type="button" className="btn btn-danger w-100" onClick={() => handleRemoveItem(index)}>✕</button>
+                  <button type="button" className="btn btn-danger w-100" onClick={() => handleRemoveItem(index)}>X</button>
                 </div>
               </div>
             ))}
@@ -372,7 +372,7 @@ function Student1Section() {
               </>
             ) : (
               <>
-                <div>✗ Error: {orderResult.error.error}</div>
+                <div>Error: {orderResult.error.error}</div>
                 {orderResult.error.stack && <pre className="mt-2 mb-0">{orderResult.error.stack}</pre>}
               </>
             )}
@@ -421,7 +421,7 @@ function Student1Section() {
               </>
             ) : (
               <>
-                <div>✗ Error: {payResult.error.error}</div>
+                <div>Error: {payResult.error.error}</div>
                 {payResult.error.stack && <pre className="mt-2 mb-0">{payResult.error.stack}</pre>}
               </>
             )}
@@ -506,7 +506,7 @@ function Student1Section() {
               </>
             ) : (
               <>
-                <div>✗ Error: {reportResult.error.error}</div>
+                <div>Error: {reportResult.error.error}</div>
                 {reportResult.error.stack && <pre className="mt-2 mb-0">{reportResult.error.stack}</pre>}
               </>
             )}
