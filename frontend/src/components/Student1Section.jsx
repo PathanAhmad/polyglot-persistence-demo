@@ -496,16 +496,6 @@ function Student1Section({ mode, actingCustomerEmail }) {
                     </button>
                   </div>
                 </div>
-
-                <div className="text-center">
-                  <button
-                    className="btn btn-link text-muted"
-                    onClick={() => setCurrentOrder(null)}
-                    disabled={loading}
-                  >
-                    I'll pay later
-                  </button>
-                </div>
               </div>
             </div>
           </div>

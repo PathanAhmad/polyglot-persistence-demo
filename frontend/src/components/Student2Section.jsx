@@ -47,7 +47,7 @@ function Student2Section({ mode, actingRiderEmail }) {
   const loadAvailableOrders = async () => {
     try {
       // Use mode-specific endpoint to fetch orders from correct database
-      const endpoint = mode === 'sql' ? '/orders?unassigned=true&limit=50' : `/student2/${mode}/orders?status=preparing&limit=50`
+      const endpoint = mode === 'sql' ? '/orders?unassigned=true&status=preparing&limit=50' : `/student2/${mode}/orders?status=preparing&limit=50`
       const response = await api.get(endpoint)
       if (response.data.orders) {
         // Filter unassigned orders for Mongo mode
