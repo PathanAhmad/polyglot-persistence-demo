@@ -200,7 +200,13 @@ function Student2Section({ mode, actingRiderEmail }) {
               key={order.orderId}
               type="button"
               className={`list-group-item list-group-item-action ${selectedOrder?.orderId === order.orderId ? 'active' : ''}`}
-              onClick={() => setSelectedOrder(order)}
+              onClick={() => {
+                setSelectedOrder(order)
+                // Sync deliveryStatus with the selected order's current status (Bug 1 fix)
+                if (view === 'active' && order.deliveryStatus) {
+                  setDeliveryStatus(order.deliveryStatus)
+                }
+              }}
             >
               <div className="d-flex w-100 justify-content-between">
                 <h6 className="mb-1">Order #{order.orderId}</h6>
@@ -511,6 +517,8 @@ function Student2Section({ mode, actingRiderEmail }) {
               onClick={() => {
                 setView('available')
                 setSelectedOrder(null)
+                // Reset to default for available orders (Bug 2 fix)
+                setDeliveryStatus('assigned')
               }}
             >
               Available Orders
@@ -521,6 +529,8 @@ function Student2Section({ mode, actingRiderEmail }) {
               onClick={() => {
                 setView('active')
                 setSelectedOrder(null)
+                // Reset to default for active deliveries (Bug 2 fix)
+                setDeliveryStatus('assigned')
               }}
             >
               Active Deliveries
@@ -531,6 +541,8 @@ function Student2Section({ mode, actingRiderEmail }) {
               onClick={() => {
                 setView('completed')
                 setSelectedOrder(null)
+                // Reset delivery status for consistency
+                setDeliveryStatus('assigned')
               }}
             >
               Completed
@@ -541,6 +553,8 @@ function Student2Section({ mode, actingRiderEmail }) {
               onClick={() => {
                 setView('analytics')
                 setSelectedOrder(null)
+                // Reset delivery status for consistency
+                setDeliveryStatus('assigned')
               }}
             >
               Analytics
