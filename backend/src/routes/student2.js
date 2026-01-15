@@ -324,7 +324,7 @@ student2Router.get("/student2/mongo/orders", async (req, res, next) => {
       deliveryStatus: order.delivery?.deliveryStatus || null,
       assignedAt: order.delivery?.assignedAt || null,
       riderEmail: order.delivery?.rider?.email || null,
-      paymentMethod: order.payment?.paymentMethod || null
+      paymentMethod: order.payment?.method || null
     }));
 
     res.json({ ok: true, orders: transformedOrders });

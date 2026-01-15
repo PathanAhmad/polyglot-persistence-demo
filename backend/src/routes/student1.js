@@ -385,7 +385,24 @@ student1Router.post("/student1/mongo/place_order", async (req, res, next) => {
 
     if (!insertedOrderId) throw new Error("could not allocate a unique orderId");
 
-    res.json({ ok: true, orderId: insertedOrderId });
+    // Return the same structure as SQL for consistency
+    const order = {
+      orderId: insertedOrderId,
+      createdAt,
+      status: "created",
+      totalAmount,
+      restaurant: {
+        name: restaurant.name,
+        address: restaurant.address
+      },
+      customer: {
+        name: customer.name,
+        email: customer.email
+      },
+      orderItems: normalizedItems
+    };
+
+    res.json({ ok: true, order });
   } catch (e) {
     next(e);
   }
@@ -513,7 +530,7 @@ student1Router.get("/student1/mongo/orders", async (req, res, next) => {
       deliveryStatus: order.delivery?.deliveryStatus || null,
       assignedAt: order.delivery?.assignedAt || null,
       riderEmail: order.delivery?.rider?.email || null,
-      paymentMethod: order.payment?.paymentMethod || null
+      paymentMethod: order.payment?.method || null
     }));
 
     res.json({ ok: true, orders: transformedOrders });

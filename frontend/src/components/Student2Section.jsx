@@ -52,7 +52,7 @@ function Student2Section({ mode, actingRiderEmail }) {
       if (response.data.orders) {
         // Filter unassigned orders for Mongo mode
         const orders = mode === 'mongo' 
-          ? response.data.orders.filter(o => !o.delivery || !o.delivery.riderId)
+          ? response.data.orders.filter(o => !o.riderEmail)
           : response.data.orders
         setAvailableOrders(orders)
       }
