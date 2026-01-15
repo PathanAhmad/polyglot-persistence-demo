@@ -46,9 +46,15 @@ function Student2Section({ mode, actingRiderEmail }) {
 
   const loadAvailableOrders = async () => {
     try {
-      const response = await api.get('/orders?unassigned=true&limit=50')
+      // Use mode-specific endpoint to fetch orders from correct database
+      const endpoint = mode === 'sql' ? '/orders?unassigned=true&limit=50' : `/student2/${mode}/orders?status=preparing&limit=50`
+      const response = await api.get(endpoint)
       if (response.data.orders) {
-        setAvailableOrders(response.data.orders)
+        // Filter unassigned orders for Mongo mode
+        const orders = mode === 'mongo' 
+          ? response.data.orders.filter(o => !o.delivery || !o.delivery.riderId)
+          : response.data.orders
+        setAvailableOrders(orders)
       }
     } catch (error) {
       console.error('Error loading available orders:', error)
@@ -61,7 +67,11 @@ function Student2Section({ mode, actingRiderEmail }) {
       return
     }
     try {
-      const response = await api.get(`/orders?riderEmail=${encodeURIComponent(actingRiderEmail)}&excludeDelivered=true&limit=50`)
+      // Use mode-specific endpoint to fetch orders from correct database
+      const endpoint = mode === 'sql' 
+        ? `/orders?riderEmail=${encodeURIComponent(actingRiderEmail)}&excludeDelivered=true&limit=50`
+        : `/student2/${mode}/orders?riderEmail=${encodeURIComponent(actingRiderEmail)}&excludeDelivered=true&limit=50`
+      const response = await api.get(endpoint)
       if (response.data.orders) {
         setActiveDeliveries(response.data.orders)
       }
@@ -76,7 +86,11 @@ function Student2Section({ mode, actingRiderEmail }) {
       return
     }
     try {
-      const response = await api.get(`/orders?riderEmail=${encodeURIComponent(actingRiderEmail)}&deliveryStatus=delivered&limit=50`)
+      // Use mode-specific endpoint to fetch orders from correct database
+      const endpoint = mode === 'sql'
+        ? `/orders?riderEmail=${encodeURIComponent(actingRiderEmail)}&deliveryStatus=delivered&limit=50`
+        : `/student2/${mode}/orders?riderEmail=${encodeURIComponent(actingRiderEmail)}&deliveryStatus=delivered&limit=50`
+      const response = await api.get(endpoint)
       if (response.data.orders) {
         setCompletedDeliveries(response.data.orders)
       }
@@ -197,7 +211,7 @@ function Student2Section({ mode, actingRiderEmail }) {
               </p>
               <small>
                 {order.deliveryStatus && <span className="badge bg-secondary me-2">{order.deliveryStatus}</span>}
-                Total: <strong>${Number(order.totalAmount).toFixed(2)}</strong>
+                Total: <strong>€{Number(order.totalAmount).toFixed(2)}</strong>
               </small>
             </button>
           ))}
@@ -233,7 +247,7 @@ function Student2Section({ mode, actingRiderEmail }) {
                     <dd className="col-sm-7">{selectedOrder.restaurantName}</dd>
                     
                     <dt className="col-sm-5">Total:</dt>
-                    <dd className="col-sm-7">${Number(selectedOrder.totalAmount).toFixed(2)}</dd>
+                    <dd className="col-sm-7">€{Number(selectedOrder.totalAmount).toFixed(2)}</dd>
                     
                     <dt className="col-sm-5">Created:</dt>
                     <dd className="col-sm-7">{new Date(selectedOrder.createdAt).toLocaleString()}</dd>
@@ -294,7 +308,7 @@ function Student2Section({ mode, actingRiderEmail }) {
                     <dd className="col-sm-7">{selectedOrder.restaurantName}</dd>
                     
                     <dt className="col-sm-5">Total:</dt>
-                    <dd className="col-sm-7">${Number(selectedOrder.totalAmount).toFixed(2)}</dd>
+                    <dd className="col-sm-7">€{Number(selectedOrder.totalAmount).toFixed(2)}</dd>
                     
                     <dt className="col-sm-5">Current Status:</dt>
                     <dd className="col-sm-7">
@@ -369,7 +383,7 @@ function Student2Section({ mode, actingRiderEmail }) {
                     <tr key={order.orderId}>
                       <td><strong>#{order.orderId}</strong></td>
                       <td>{order.restaurantName}</td>
-                      <td>${Number(order.totalAmount).toFixed(2)}</td>
+                      <td>€{Number(order.totalAmount).toFixed(2)}</td>
                       <td>{order.assignedAt ? new Date(order.assignedAt).toLocaleString() : 'N/A'}</td>
                     </tr>
                   ))}
@@ -494,28 +508,40 @@ function Student2Section({ mode, actingRiderEmail }) {
             <button
               type="button"
               className={`btn btn-sm ${view === 'available' ? 'btn-primary' : 'btn-outline-primary'}`}
-              onClick={() => setView('available')}
+              onClick={() => {
+                setView('available')
+                setSelectedOrder(null)
+              }}
             >
               Available Orders
             </button>
             <button
               type="button"
               className={`btn btn-sm ${view === 'active' ? 'btn-primary' : 'btn-outline-primary'}`}
-              onClick={() => setView('active')}
+              onClick={() => {
+                setView('active')
+                setSelectedOrder(null)
+              }}
             >
               Active Deliveries
             </button>
             <button
               type="button"
               className={`btn btn-sm ${view === 'completed' ? 'btn-primary' : 'btn-outline-primary'}`}
-              onClick={() => setView('completed')}
+              onClick={() => {
+                setView('completed')
+                setSelectedOrder(null)
+              }}
             >
               Completed
             </button>
             <button
               type="button"
               className={`btn btn-sm ${view === 'analytics' ? 'btn-primary' : 'btn-outline-primary'}`}
-              onClick={() => setView('analytics')}
+              onClick={() => {
+                setView('analytics')
+                setSelectedOrder(null)
+              }}
             >
               Analytics
             </button>

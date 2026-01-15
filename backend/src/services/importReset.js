@@ -68,20 +68,38 @@ async function importResetMariaDb() {
     const seed = process.env.SEED ? Number(process.env.SEED) : Date.now();
     const rng = makeRng(Number.isFinite(seed) ? seed : Date.now());
 
+    // Vienna-based demo data (restaurants + realistic Vienna-style addresses)
     const restaurantNames = [
-      "Pasta Place",
-      "Sushi Spot",
-      "Burger Barn",
-      "Curry Corner",
-      "Pizza Palace",
-      "Salad Studio",
-      "Taco Town",
-      "Noodle Nest",
-      "Kebab Kitchen",
-      "Vienna Bites"
+      "Figlmueller",
+      "Plachutta",
+      "Cafe Central",
+      "Zum Schwarzen Kameel",
+      "Lugeck",
+      "Steirereck",
+      "NENI am Naschmarkt",
+      "Gasthaus Poeschel",
+      "Schnitzelwirt",
+      "Vapiano Wien Mitte"
     ];
 
-    const streets = ["Main St", "High St", "Ring Road", "Market Ave", "Oak Lane", "River Rd"];
+    const viennaAddressPool = [
+      { street: "Kaerntner Strasse", postcode: "1010" },
+      { street: "Rotenturmstrasse", postcode: "1010" },
+      { street: "Mariahilfer Strasse", postcode: "1060" },
+      { street: "Waehringer Strasse", postcode: "1090" },
+      { street: "Praterstrasse", postcode: "1020" },
+      { street: "Landstrasser Hauptstrasse", postcode: "1030" },
+      { street: "Favoritenstrasse", postcode: "1040" },
+      { street: "Schoenbrunner Strasse", postcode: "1050" },
+      { street: "Thaliastrasse", postcode: "1160" },
+      { street: "Donaufelder Strasse", postcode: "1210" }
+    ];
+
+    function makeViennaAddress(rng) {
+      const a = pick(rng, viennaAddressPool);
+      const houseNo = randInt(rng, 1, 200);
+      return `${a.street} ${houseNo}, ${a.postcode} Wien`;
+    }
     const vehicles = ["bike", "scooter", "car"];
     const payMethods = ["card", "cash", "paypal"];
     const categories = ["vegan", "spicy", "dessert", "drink", "starter", "main"];
@@ -90,7 +108,7 @@ async function importResetMariaDb() {
     const restaurantIds = [];
     for (let i = 0; i < 10; i++) {
       const name = restaurantNames[i] || `Restaurant ${i + 1}`;
-      const address = `${randInt(rng, 1, 200)} ${pick(rng, streets)}`;
+      const address = makeViennaAddress(rng);
       const r = await conn.query("INSERT INTO restaurant (name, address) VALUES (?, ?)", [name, address]);
       restaurantIds.push(Number(r.insertId));
     }
@@ -157,7 +175,7 @@ async function importResetMariaDb() {
       const personId = Number(p.insertId);
       await conn.query("INSERT INTO customer (customer_id, default_address, preferred_payment_method) VALUES (?, ?, ?)", [
         personId,
-        `${randInt(rng, 1, 200)} ${pick(rng, streets)}`,
+        makeViennaAddress(rng),
         pick(rng, payMethods)
       ]);
       customerIds.push(personId);

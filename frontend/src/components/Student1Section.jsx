@@ -79,12 +79,16 @@ function Student1Section({ mode, actingCustomerEmail }) {
     if (!actingCustomerEmail) return
     
     try {
-      const response = await api.get('/orders')
+      // Use mode-specific endpoint to fetch orders from correct database
+      const endpoint = mode === 'sql'
+        ? '/orders?limit=100'
+        : `/student1/${mode}/orders?customerEmail=${encodeURIComponent(actingCustomerEmail)}&limit=100`
+      const response = await api.get(endpoint)
       if (response.data.orders) {
-        // Filter orders for the current customer
-        const customerOrders = response.data.orders.filter(
-          order => order.customerEmail === actingCustomerEmail
-        )
+        // Filter orders for the current customer (SQL returns all orders)
+        const customerOrders = mode === 'sql'
+          ? response.data.orders.filter(order => order.customerEmail === actingCustomerEmail)
+          : response.data.orders
         setMyOrders(customerOrders)
       }
     } catch (error) {
@@ -253,11 +257,15 @@ function Student1Section({ mode, actingCustomerEmail }) {
   const handleSelectRestaurant = (restaurant) => {
     setSelectedRestaurant(restaurant)
     setMenuView('menu')
+    // Clear cart when switching restaurants to prevent mixing items
+    setCart([])
   }
 
   const handleBackToRestaurants = () => {
     setMenuView('restaurants')
     setSelectedRestaurant(null)
+    // Clear cart when returning to restaurant list
+    setCart([])
   }
 
   const renderOrderView = () => (
@@ -310,7 +318,7 @@ function Student1Section({ mode, actingCustomerEmail }) {
                             <p className="card-text small text-muted">{item.description}</p>
                           )}
                           <div className="d-flex justify-content-between align-items-center">
-                            <span className="fw-bold text-success">${Number(item.price).toFixed(2)}</span>
+                            <span className="fw-bold text-success">€{Number(item.price).toFixed(2)}</span>
                             <button 
                               className="btn btn-sm btn-primary"
                               onClick={() => addToCart(item)}
@@ -344,7 +352,7 @@ function Student1Section({ mode, actingCustomerEmail }) {
                         <div className="d-flex justify-content-between align-items-start">
                           <div className="flex-grow-1">
                             <h6 className="mb-1">{item.name}</h6>
-                            <small className="text-muted">${Number(item.price).toFixed(2)} each</small>
+                            <small className="text-muted">€{Number(item.price).toFixed(2)} each</small>
                           </div>
                           <button
                             className="btn btn-sm btn-outline-danger"
@@ -381,7 +389,7 @@ function Student1Section({ mode, actingCustomerEmail }) {
                   <div className="border-top pt-3 mb-3">
                     <div className="d-flex justify-content-between fw-bold">
                       <span>Total:</span>
-                      <span className="text-success">${calculateTotal()}</span>
+                      <span className="text-success">€{calculateTotal()}</span>
                     </div>
                   </div>
 
@@ -448,7 +456,7 @@ function Student1Section({ mode, actingCustomerEmail }) {
                   <dd className="col-sm-8">{currentOrder.restaurant?.name || currentOrder.order?.restaurant?.name || 'N/A'}</dd>
                   
                   <dt className="col-sm-4">Total Amount:</dt>
-                  <dd className="col-sm-8"><strong className="text-success">${Number(currentOrder.totalAmount || currentOrder.order?.totalAmount).toFixed(2)}</strong></dd>
+                  <dd className="col-sm-8"><strong className="text-success">€{Number(currentOrder.totalAmount || currentOrder.order?.totalAmount).toFixed(2)}</strong></dd>
                 </dl>
 
                 <div className="mb-3">
@@ -569,7 +577,7 @@ function Student1Section({ mode, actingCustomerEmail }) {
                   <tr key={order.orderId}>
                     <td><strong>#{order.orderId}</strong></td>
                     <td>{order.restaurantName}</td>
-                    <td>${Number(order.totalAmount).toFixed(2)}</td>
+                    <td>€{Number(order.totalAmount).toFixed(2)}</td>
                     <td>{getOrderStatusBadge(order)}</td>
                     <td>{new Date(order.createdAt).toLocaleString()}</td>
                     <td>
