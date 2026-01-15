@@ -270,5 +270,68 @@ student2Router.get("/student2/mongo/report", async (req, res, next) => {
   }
 });
 
+// -------------------------
+// Student 2 - MongoDB Orders Query
+// -------------------------
+
+student2Router.get("/student2/mongo/orders", async (req, res, next) => {
+  try {
+    const status = req.query.status ? String(req.query.status) : null;
+    const riderEmail = req.query.riderEmail ? String(req.query.riderEmail) : null;
+    const deliveryStatus = req.query.deliveryStatus ? String(req.query.deliveryStatus) : null;
+    const excludeDelivered = req.query.excludeDelivered === 'true';
+    const limit = req.query.limit ? Number(req.query.limit) : 50;
+
+    const { db } = await getMongo();
+
+    const filter = {};
+    
+    if (status) {
+      filter.status = status;
+    }
+    
+    if (riderEmail) {
+      filter["delivery.rider.email"] = riderEmail;
+    }
+    
+    if (deliveryStatus) {
+      filter["delivery.deliveryStatus"] = deliveryStatus;
+    }
+    
+    if (excludeDelivered) {
+      filter.$or = [
+        { "delivery.deliveryStatus": { $ne: "delivered" } },
+        { "delivery.deliveryStatus": { $exists: false } },
+        { delivery: null }
+      ];
+    }
+
+    const orders = await db
+      .collection("orders")
+      .find(filter)
+      .sort({ createdAt: -1 })
+      .limit(Math.min(Math.max(limit, 1), 200))
+      .toArray();
+
+    // Transform MongoDB documents to match SQL format for consistency
+    const transformedOrders = orders.map(order => ({
+      orderId: order.orderId,
+      createdAt: order.createdAt,
+      status: order.status,
+      totalAmount: order.totalAmount,
+      restaurantName: order.restaurant?.name || null,
+      customerEmail: order.customer?.email || null,
+      deliveryStatus: order.delivery?.deliveryStatus || null,
+      assignedAt: order.delivery?.assignedAt || null,
+      riderEmail: order.delivery?.rider?.email || null,
+      paymentMethod: order.payment?.paymentMethod || null
+    }));
+
+    res.json({ ok: true, orders: transformedOrders });
+  } catch (e) {
+    next(e);
+  }
+});
+
 module.exports = { student2Router };
 

@@ -479,5 +479,48 @@ student1Router.get("/student1/mongo/report", async (req, res, next) => {
   }
 });
 
+// -------------------------
+// Student 1 - MongoDB Orders Query
+// -------------------------
+
+student1Router.get("/student1/mongo/orders", async (req, res, next) => {
+  try {
+    const customerEmail = req.query.customerEmail ? String(req.query.customerEmail) : null;
+    const limit = req.query.limit ? Number(req.query.limit) : 50;
+
+    const { db } = await getMongo();
+
+    const filter = {};
+    if (customerEmail) {
+      filter["customer.email"] = customerEmail;
+    }
+
+    const orders = await db
+      .collection("orders")
+      .find(filter)
+      .sort({ createdAt: -1 })
+      .limit(Math.min(Math.max(limit, 1), 200))
+      .toArray();
+
+    // Transform MongoDB documents to match SQL format for consistency
+    const transformedOrders = orders.map(order => ({
+      orderId: order.orderId,
+      createdAt: order.createdAt,
+      status: order.status,
+      totalAmount: order.totalAmount,
+      restaurantName: order.restaurant?.name || null,
+      customerEmail: order.customer?.email || null,
+      deliveryStatus: order.delivery?.deliveryStatus || null,
+      assignedAt: order.delivery?.assignedAt || null,
+      riderEmail: order.delivery?.rider?.email || null,
+      paymentMethod: order.payment?.paymentMethod || null
+    }));
+
+    res.json({ ok: true, orders: transformedOrders });
+  } catch (e) {
+    next(e);
+  }
+});
+
 module.exports = { student1Router };
 
