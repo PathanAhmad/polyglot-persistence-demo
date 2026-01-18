@@ -21,6 +21,10 @@ async function ensureMongoIndexes() {
   // Enforce orderId uniqueness so Student 1 can safely allocate numeric order IDs
   await db.collection("orders").createIndex({ orderId: 1 }, { name: "idx_orders_orderId_unique", unique: true });
 
+  // People collection: quick lookup by email for both customers and riders.
+  // (We store both roles in `people`, not in separate `customers` / `riders` collections.)
+  await db.collection("people").createIndex({ email: 1 }, { name: "idx_people_email_unique", unique: true });
+
   // ===== STUDENT 1 INDEXES (Order Management & Reports) =====
   // Place Order & Report: Filter by restaurant name, sort by creation date
   await db.collection("orders").createIndex(
@@ -28,10 +32,15 @@ async function ensureMongoIndexes() {
     { name: "idx_orders_student1_report" }
   );
 
-  // Pay Order: Look up order by orderId for payment
-  // Already covered by unique constraint above, but adding composite for payment filtering
+  // Pay Order: Look up order by orderId for payment.
+  // Already covered by unique constraint above, but keep a composite index aligned to our document shape.
+  try {
+    await db.collection("orders").dropIndex("idx_orders_payment_lookup");
+  } catch (_e) {
+    // ignore: index might not exist / might already be correct
+  }
   await db.collection("orders").createIndex(
-    { orderId: 1, "payment.paid_at": 1 },
+    { orderId: 1, "payment.paidAt": 1 },
     { name: "idx_orders_payment_lookup" }
   );
 
@@ -48,19 +57,6 @@ async function ensureMongoIndexes() {
     { name: "idx_orders_student2_report" }
   );
 
-  // ===== LOOKUP INDEXES =====
-  // Riders collection: Quick lookup by email for assignment
-  await db.collection("riders").createIndex(
-    { email: 1 },
-    { name: "idx_riders_email_unique", unique: true }
-  );
-
-  // Customers collection: Quick lookup by email for order placement
-  await db.collection("customers").createIndex(
-    { email: 1 },
-    { name: "idx_customers_email_unique", unique: true }
-  );
-
   // Restaurants collection: Quick lookup by name for menu and ordering
   await db.collection("restaurants").createIndex(
     { name: 1 },
@@ -75,8 +71,13 @@ async function ensureMongoIndexes() {
   );
 
   // Student 2: Orders by rider and date range (supports date and status filtering)
+  try {
+    await db.collection("orders").dropIndex("idx_orders_rider_assignment");
+  } catch (_e) {
+    // ignore
+  }
   await db.collection("orders").createIndex(
-    { "delivery.rider.email": 1, "delivery.assignedAt": 1, "delivery.deliveryStatus": 1 },
+    { "delivery.rider.email": 1, "delivery.deliveryStatus": 1, "delivery.assignedAt": -1 },
     { name: "idx_orders_rider_assignment" }
   );
 }

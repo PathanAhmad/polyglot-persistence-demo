@@ -165,17 +165,17 @@ We create indexes in `backend/src/db/mongodb.js` (called on `/api/health` and af
   - Used by pay/assign endpoints that target an order by `orderId`.
 - `restaurants`: `idx_restaurants_name_unique` on `{ name: 1 }` (unique)
   - Used to resolve a restaurant by name.
-- `customers/riders`: we index `email` - but note we store people in **`people`**, not `customers`/`riders`.
-  - In our current code, we still attempt to create email indexes on `customers` and `riders`. That's harmless but unused, because those collections aren't written by migration.
-- `orders`: `idx_orders_payment_lookup` on `{ orderId: 1, "payment.paid_at": 1 }`
-  - Note: our stored field is `payment.paidAt` (camelCase). So this index currently doesn't match the actual document shape and won't help queries unless we align the field name.
+- `people`: `idx_people_email_unique` on `{ email: 1 }` (unique)
+  - Used to resolve a customer/rider by email (`db.people.findOne({ type, email })`).
+- `orders`: `idx_orders_payment_lookup` on `{ orderId: 1, "payment.paidAt": 1 }`
+  - Note: payment is stored as `payment.paidAt` (camelCase), so the index must match that shape.
 
 ### Reporting
 - `idx_orders_student1_report` on `{ "restaurant.name": 1, createdAt: -1 }`
 - `idx_orders_student2_report` on `{ "delivery.rider.email": 1, createdAt: -1, "delivery.deliveryStatus": 1, "delivery.assignedAt": -1 }`
 - We also create two additional "range-friendly" report indexes:
   - `idx_orders_restaurant_date` on `{ "restaurant.name": 1, createdAt: 1 }`
-  - `idx_orders_rider_assignment` on `{ "delivery.rider.email": 1, "delivery.assignedAt": 1, "delivery.deliveryStatus": 1 }`
+  - `idx_orders_rider_assignment` on `{ "delivery.rider.email": 1, "delivery.deliveryStatus": 1, "delivery.assignedAt": -1 }`
 
 ### Checking index usage with `explain("executionStats")`
 We don't guess performance numbers here; we verify the plan:
