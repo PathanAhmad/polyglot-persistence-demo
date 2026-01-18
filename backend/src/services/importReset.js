@@ -1,6 +1,7 @@
 const { withTx } = require("../db/mariadb");
 const { config } = require("../config");
 const { readSchemaSql } = require("../utils/schema");
+const { getMongo } = require("../db/mongodb");
 
 function randInt(rng, min, max) {
   return Math.floor(rng() * (max - min + 1)) + min;
@@ -59,8 +60,23 @@ async function clearAll(conn) {
   }
 }
 
+async function clearMongoAfterSqlReset() {
+  const { db } = await getMongo();
+
+  // Root cause fix:
+  // Import/Reset refreshes MariaDB, so we must clear any previous "migration happened"
+  // marker in Mongo. Otherwise /api/health would keep reporting activeMode="mongo"
+  // and the UI would keep calling Mongo endpoints with stale data.
+  await Promise.all([
+    db.collection("restaurants").deleteMany({}),
+    db.collection("people").deleteMany({}),
+    db.collection("orders").deleteMany({}),
+    db.collection("meta").deleteOne({ _id: "migration" })
+  ]);
+}
+
 async function importResetMariaDb() {
-  return withTx(async (conn) => {
+  const inserted = await withTx(async (conn) => {
     // I (1) ensure schema exists, (2) clear old data, then (3) insert fresh randomized data.
     await recreateSchema(conn);
     await clearAll(conn);
@@ -287,6 +303,16 @@ async function importResetMariaDb() {
       deliveries: insertedDeliveries
     };
   });
+
+  try {
+    await clearMongoAfterSqlReset();
+  } catch (e) {
+    // Preserve the original stack trace but add context.
+    e.message = `Import/Reset succeeded for MariaDB but failed to clear Mongo migration state: ${e.message}`;
+    throw e;
+  }
+
+  return inserted;
 }
 
 module.exports = { importResetMariaDb };
