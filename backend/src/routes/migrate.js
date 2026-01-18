@@ -4,11 +4,12 @@ const { migrateSqlToMongo } = require("../services/migrateSqlToMongo");
 
 const migrateRouter = express.Router();
 
-migrateRouter.post("/migrate_to_mongo", async (_req, res, next) => {
+migrateRouter.post("/migrate_to_mongo", async function(_req, res, next) {
   try {
     const result = await migrateSqlToMongo();
     res.json({ ok: true, migrated: result });
-  } catch (e) {
+  } 
+  catch (e) {
     next(e);
   }
 });

@@ -14,20 +14,24 @@ function App() {
   const [riders, setRiders] = useState([])
   const [showAdminModal, setShowAdminModal] = useState(false)
 
-  useEffect(() => {
+  useEffect(function() {
     refreshSystemStatus()
     loadCustomers()
     loadRiders()
   }, [])
 
+
+
   const refreshSystemStatus = async () => {
     try {
       const response = await api.get('/health')
       setSystemStatus(response.data)
-      if (response.data?.activeMode === 'mongo' || response.data?.activeMode === 'sql') {
+      
+      if ( response.data?.activeMode === 'mongo' || response.data?.activeMode === 'sql' ) {
         setMode(response.data.activeMode)
       }
-    } catch (error) {
+    } 
+    catch (error) {
       // If health fails, keep the UI functional in SQL mode but show no status.
       console.error('Error loading system status:', error)
       setSystemStatus(null)
@@ -35,33 +39,43 @@ function App() {
     }
   }
 
+
+
   const loadCustomers = async () => {
     try {
       const response = await api.get('/customers')
-      if (response.data.customers) {
+      if ( response.data.customers ) {
         setCustomers(response.data.customers)
-        if (response.data.customers.length > 0) {
+        
+        if ( response.data.customers.length > 0 ) {
           setActingCustomerEmail(response.data.customers[0].email)
         }
       }
-    } catch (error) {
+    } 
+    catch (error) {
       console.error('Error loading customers:', error)
     }
   }
 
+
+
   const loadRiders = async () => {
     try {
       const response = await api.get('/riders')
-      if (response.data.riders) {
+      if ( response.data.riders ) {
         setRiders(response.data.riders)
-        if (response.data.riders.length > 0) {
+        
+        if ( response.data.riders.length > 0 ) {
           setActingRiderEmail(response.data.riders[0].email)
         }
       }
-    } catch (error) {
+    } 
+    catch (error) {
       console.error('Error loading riders:', error)
     }
   }
+
+
 
   return (
     <div className="container my-4">
@@ -69,7 +83,9 @@ function App() {
         <h1 className="mb-0">Food Delivery System</h1>
         <button
           className="btn btn-outline-secondary"
-          onClick={() => setShowAdminModal(true)}
+          onClick={function() {
+            setShowAdminModal(true)
+          }}
           type="button"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-gear-fill me-2" viewBox="0 0 16 16" style={{ verticalAlign: 'text-bottom' }}>
@@ -88,14 +104,18 @@ function App() {
                 <button
                   type="button"
                   className={`btn ${activeRole === 'customer' ? 'btn-success' : 'btn-outline-success'}`}
-                  onClick={() => setActiveRole('customer')}
+                  onClick={function() {
+                    setActiveRole('customer')
+                  }}
                 >
                   Customer
                 </button>
                 <button
                   type="button"
                   className={`btn ${activeRole === 'rider' ? 'btn-info' : 'btn-outline-info'}`}
-                  onClick={() => setActiveRole('rider')}
+                  onClick={function() {
+                    setActiveRole('rider')
+                  }}
                 >
                   Rider
                 </button>
@@ -112,6 +132,7 @@ function App() {
                 <small className="text-muted">
                   Mode switches automatically after running <strong>Migrate SQL → MongoDB</strong> in Admin Setup.
                 </small>
+                
                 {systemStatus?.mongo?.migration?.lastMigrationAt && (
                   <small className="text-muted">
                     Last migration: {new Date(systemStatus.mongo.migration.lastMigrationAt).toLocaleString()}
@@ -125,37 +146,47 @@ function App() {
                 <select
                   className="form-select"
                   value={actingCustomerEmail}
-                  onChange={(e) => setActingCustomerEmail(e.target.value)}
+                  onChange={function(e) {
+                    setActingCustomerEmail(e.target.value)
+                  }}
                 >
                   <option value="">Select customer...</option>
-                  {customers.map(customer => (
-                    <option key={customer.email} value={customer.email}>
-                      {customer.name} ({customer.email})
-                    </option>
-                  ))}
+                  {customers.map(function(customer) {
+                    return (
+                      <option key={customer.email} value={customer.email}>
+                        {customer.name} ({customer.email})
+                      </option>
+                    )
+                  })}
                 </select>
               </div>
             )}
+            
             {activeRole === 'rider' && (
               <div className="col-md-4">
                 <label className="form-label fw-bold">Acting as Rider</label>
                 <select
                   className="form-select"
                   value={actingRiderEmail}
-                  onChange={(e) => setActingRiderEmail(e.target.value)}
+                  onChange={function(e) {
+                    setActingRiderEmail(e.target.value)
+                  }}
                 >
                   <option value="">Select rider...</option>
-                  {riders.map(rider => (
-                    <option key={rider.email} value={rider.email}>
-                      {rider.name} ({rider.email})
-                    </option>
-                  ))}
+                  {riders.map(function(rider) {
+                    return (
+                      <option key={rider.email} value={rider.email}>
+                        {rider.name} ({rider.email})
+                      </option>
+                    )
+                  })}
                 </select>
               </div>
             )}
           </div>
         </div>
       </div>
+
 
       {activeRole === 'customer' && (
         <Student1Section 
@@ -170,9 +201,10 @@ function App() {
         />
       )}
 
+
       {showAdminModal && (
         <AdminSection
-          onClose={() => {
+          onClose={function() {
             setShowAdminModal(false)
             refreshSystemStatus()
           }}

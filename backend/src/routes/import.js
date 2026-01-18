@@ -5,19 +5,20 @@ const { withConn } = require("../db/mariadb");
 
 const importRouter = express.Router();
 
-importRouter.post("/import_reset", async (_req, res, next) => {
+importRouter.post("/import_reset", async function(_req, res, next) {
   try {
     const result = await importResetMariaDb();
     res.json({ ok: true, inserted: result });
-  } catch (e) {
+  } 
+  catch (e) {
     next(e);
   }
 });
 
-importRouter.get("/riders", async (_req, res, next) => {
+importRouter.get("/riders", async function(_req, res, next) {
   try {
-    const riders = await withConn((conn) =>
-      conn.query(
+    const riders = await withConn(function(conn) {
+      return conn.query(
         `
         SELECT
           r.rider_id AS riderId,
@@ -29,18 +30,21 @@ importRouter.get("/riders", async (_req, res, next) => {
         JOIN person p ON p.person_id = r.rider_id
         ORDER BY p.name ASC
         `
-      )
-    );
+      );
+    });
     res.json({ ok: true, riders });
-  } catch (e) {
+  } 
+  catch (e) {
     next(e);
   }
 });
 
-importRouter.get("/customers", async (_req, res, next) => {
+
+
+importRouter.get("/customers", async function(_req, res, next) {
   try {
-    const customers = await withConn((conn) =>
-      conn.query(
+    const customers = await withConn(function(conn) {
+      return conn.query(
         `
         SELECT
           c.customer_id AS customerId,
@@ -51,18 +55,21 @@ importRouter.get("/customers", async (_req, res, next) => {
         JOIN person p ON p.person_id = c.customer_id
         ORDER BY p.name ASC
         `
-      )
-    );
+      );
+    });
     res.json({ ok: true, customers });
-  } catch (e) {
+  } 
+  catch (e) {
     next(e);
   }
 });
 
-importRouter.get("/restaurants", async (_req, res, next) => {
+
+
+importRouter.get("/restaurants", async function(_req, res, next) {
   try {
-    const restaurants = await withConn((conn) =>
-      conn.query(
+    const restaurants = await withConn(function(conn) {
+      return conn.query(
         `
         SELECT
           restaurant_id AS restaurantId,
@@ -71,23 +78,28 @@ importRouter.get("/restaurants", async (_req, res, next) => {
         FROM restaurant
         ORDER BY name ASC
         `
-      )
-    );
+      );
+    });
     res.json({ ok: true, restaurants });
-  } catch (e) {
+  } 
+  catch (e) {
     next(e);
   }
 });
 
-importRouter.get("/menu_items", async (req, res, next) => {
+
+
+importRouter.get("/menu_items", async function(req, res, next) {
   try {
     const restaurantName = req.query.restaurantName;
-    if (!restaurantName) {
+    
+    if ( !restaurantName ) {
       return res.json({ ok: true, menuItems: [] });
     }
 
-    const menuItems = await withConn((conn) =>
-      conn.query(
+
+    const menuItems = await withConn(function(conn) {
+      return conn.query(
         `
         SELECT
           m.menu_item_id AS menuItemId,
@@ -101,54 +113,111 @@ importRouter.get("/menu_items", async (req, res, next) => {
         ORDER BY m.name ASC
         `,
         [restaurantName]
-      )
-    );
+      );
+    });
     res.json({ ok: true, menuItems });
-  } catch (e) {
+  } 
+  catch (e) {
     next(e);
   }
 });
 
-importRouter.get("/orders", async (req, res, next) => {
+
+
+importRouter.get("/orders", async function(req, res, next) {
   try {
-    const limit = Number(req.query.limit || 50);
-    const status = req.query.status ? String(req.query.status) : null;
-    const riderEmail = req.query.riderEmail ? String(req.query.riderEmail) : null;
-    const deliveryStatus = req.query.deliveryStatus ? String(req.query.deliveryStatus) : null;
+    let limitValue;
+    
+    if ( req.query.limit ) {
+      limitValue = req.query.limit;
+    } 
+    else {
+      limitValue = 50;
+    }
+    
+    const limit = Number(limitValue);
+    let status;
+    
+    if ( req.query.status ) {
+      status = String(req.query.status);
+    } 
+    else {
+      status = null;
+    }
+    
+    let riderEmail;
+    
+    if ( req.query.riderEmail ) {
+      riderEmail = String(req.query.riderEmail);
+    } 
+    else {
+      riderEmail = null;
+    }
+    
+    let deliveryStatus;
+    
+    if ( req.query.deliveryStatus ) {
+      deliveryStatus = String(req.query.deliveryStatus);
+    } 
+    else {
+      deliveryStatus = null;
+    }
     const unassigned = req.query.unassigned === 'true';
     const excludeDelivered = req.query.excludeDelivered === 'true';
 
     const params = [];
     const whereConditions = [];
     
-    if (status) {
+    
+    if ( status ) {
       whereConditions.push("o.status = ?");
       params.push(status);
     }
 
-    if (riderEmail) {
+
+    if ( riderEmail ) {
       whereConditions.push("rp.email = ?");
       params.push(riderEmail);
     }
 
-    if (deliveryStatus) {
+
+    if ( deliveryStatus ) {
       whereConditions.push("d.delivery_status = ?");
       params.push(deliveryStatus);
     }
 
-    if (unassigned) {
+
+    if ( unassigned ) {
       whereConditions.push("d.rider_id IS NULL");
     }
 
-    if (excludeDelivered) {
+
+    if ( excludeDelivered ) {
       whereConditions.push("(d.delivery_status IS NULL OR d.delivery_status != 'delivered')");
     }
 
-    const whereSql = whereConditions.length > 0 ? "WHERE " + whereConditions.join(" AND ") : "";
-    params.push(Number.isFinite(limit) ? Math.min(Math.max(limit, 1), 200) : 50);
+    let whereSql;
+    
+    if ( whereConditions.length > 0 ) {
+      whereSql = "WHERE " + whereConditions.join(" AND ");
+    } 
+    else {
+      whereSql = "";
+    }
+    
+    let finalLimit;
+    
+    if ( Number.isFinite(limit) ) {
+      finalLimit = Math.min(Math.max(limit, 1), 200);
+    } 
+    else {
+      finalLimit = 50;
+    }
+    
+    params.push(finalLimit);
 
-    const orders = await withConn((conn) =>
-      conn.query(
+    const orders = await withConn(function(conn) {
+      return conn.query(
         `
         SELECT
           o.order_id AS orderId,
@@ -174,11 +243,12 @@ importRouter.get("/orders", async (req, res, next) => {
         LIMIT ?
         `,
         params
-      )
-    );
+      );
+    });
 
     res.json({ ok: true, orders });
-  } catch (e) {
+  } 
+  catch (e) {
     next(e);
   }
 });

@@ -4,7 +4,7 @@ const { config } = require("../config");
 let client;
 
 async function getMongo() {
-  if (!client) {
+  if ( !client ) {
     // I keep a single MongoClient for the whole app.
     client = new MongoClient(config.mongodb.uri);
     await client.connect();

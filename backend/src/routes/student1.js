@@ -23,46 +23,89 @@ function conflict(message) {
   return e;
 }
 
+
+
 function parseIsoDateOrNull(v, fieldName) {
-  if (v == null || String(v).trim() === "") return null;
+  if ( v == null || String(v).trim() === "" ) {
+    return null;
+  }
   const d = new Date(String(v));
-  if (Number.isNaN(d.getTime())) throw badRequest(`${fieldName} must be an ISO date`);
+  if ( Number.isNaN(d.getTime()) ) {
+    throw badRequest(`${fieldName} must be an ISO date`);
+  }
   return d;
 }
 
 function toPositiveInt(v, fieldName) {
   const n = Number(v);
-  if (!Number.isFinite(n) || !Number.isInteger(n) || n <= 0) throw badRequest(`${fieldName} must be a positive integer`);
+  if ( !Number.isFinite(n) || !Number.isInteger(n) || n <= 0 ) {
+    throw badRequest(`${fieldName} must be a positive integer`);
+  }
   return n;
 }
 
 function priceToCents(price, fieldName) {
   const n = Number(price);
-  if (!Number.isFinite(n) || n < 0) throw badRequest(`${fieldName} must be a non-negative number`);
+  if ( !Number.isFinite(n) || n < 0 ) {
+    throw badRequest(`${fieldName} must be a non-negative number`);
+  }
   // I compute in cents to avoid floating point accumulation errors.
   return Math.round(n * 100);
 }
 
+
+
 function centsToAmount(cents) {
   return Number((cents / 100).toFixed(2));
 }
+
+
 
 // -------------------------
 // Student 1 - SQL (MariaDB)
 // Use case: Place order + pay
 // -------------------------
 
-student1Router.post("/student1/sql/place_order", async (req, res, next) => {
+student1Router.post("/student1/sql/place_order", async function(req, res, next) {
   try {
-    const customerEmail = req.body?.customerEmail ? String(req.body.customerEmail) : "";
-    const restaurantName = req.body?.restaurantName ? String(req.body.restaurantName) : "";
-    const items = Array.isArray(req.body?.items) ? req.body.items : null;
+    let customerEmail;
+    
+    if ( req.body?.customerEmail ) {
+      customerEmail = String(req.body.customerEmail);
+    } 
+    else {
+      customerEmail = "";
+    }
+    
+    let restaurantName;
+    
+    if ( req.body?.restaurantName ) {
+      restaurantName = String(req.body.restaurantName);
+    } 
+    else {
+      restaurantName = "";
+    }
+    
+    let items;
+    
+    if ( Array.isArray(req.body?.items) ) {
+      items = req.body.items;
+    } 
+    else {
+      items = null;
+    }
 
-    if (!customerEmail) throw badRequest("customerEmail is required");
-    if (!restaurantName) throw badRequest("restaurantName is required");
-    if (!items || !items.length) throw badRequest("items must be a non-empty array");
+    if ( !customerEmail ) {
+      throw badRequest("customerEmail is required");
+    }
+    if ( !restaurantName ) {
+      throw badRequest("restaurantName is required");
+    }
+    if ( !items || !items.length ) {
+      throw badRequest("items must be a non-empty array");
+    }
 
-    const order = await withTx(async (conn) => {
+    const order = await withTx(async function(conn) {
       const customers = await conn.query(
         `
         SELECT c.customer_id AS customerId, p.name AS customerName, p.email AS customerEmail
@@ -73,7 +116,9 @@ student1Router.post("/student1/sql/place_order", async (req, res, next) => {
         `,
         [customerEmail]
       );
-      if (!customers.length) throw notFound("customer not found");
+      if ( !customers.length ) {
+        throw notFound("customer not found");
+      }
       const customerId = Number(customers[0].customerId);
       const customerName = customers[0].customerName;
 
@@ -81,7 +126,9 @@ student1Router.post("/student1/sql/place_order", async (req, res, next) => {
         `SELECT restaurant_id AS restaurantId, name AS restaurantName, address AS restaurantAddress FROM restaurant WHERE name = ? LIMIT 1`,
         [restaurantName]
       );
-      if (!restaurants.length) throw notFound("restaurant not found");
+      if ( !restaurants.length ) {
+        throw notFound("restaurant not found");
+      }
       const restaurantId = Number(restaurants[0].restaurantId);
       const restaurantAddress = restaurants[0].restaurantAddress;
 
@@ -97,22 +144,61 @@ student1Router.post("/student1/sql/place_order", async (req, res, next) => {
       let totalCents = 0;
       const insertedItems = [];
 
-      for (let idx = 0; idx < items.length; idx++) {
-        const it = items[idx] || {};
+
+      for ( let idx = 0; idx < items.length; idx++ ) {
+        let it;
+        
+        if ( items[idx] ) {
+          it = items[idx];
+        } 
+        else {
+          it = {};
+        }
         const quantity = toPositiveInt(it.quantity, `items[${idx}].quantity`);
 
         const menuItemIdRaw = it.menuItemId;
-        const menuItemNameRaw = it.menuItemName ?? it.name; // allow either key
-        const menuItemId = menuItemIdRaw != null && String(menuItemIdRaw).trim() !== "" ? Number(menuItemIdRaw) : null;
-        const menuItemName =
-          menuItemNameRaw != null && String(menuItemNameRaw).trim() !== "" ? String(menuItemNameRaw) : null;
+        let menuItemNameRaw;
+        
+        if ( it.menuItemName != null ) {
+          menuItemNameRaw = it.menuItemName;
+        } 
+        else {
+          menuItemNameRaw = it.name; // allow either key
+        }
+        let menuItemId;
+        
+        if ( menuItemIdRaw != null && String(menuItemIdRaw).trim() !== "" ) {
+          menuItemId = Number(menuItemIdRaw);
+        } 
+        else {
+          menuItemId = null;
+        }
+        
+        let menuItemName;
+        
+        if ( menuItemNameRaw != null && String(menuItemNameRaw).trim() !== "" ) {
+          menuItemName = String(menuItemNameRaw);
+        } 
+        else {
+          menuItemName = null;
+        }
 
-        if (!Number.isFinite(menuItemId || NaN) && !menuItemName) {
+        let menuItemIdForCheck;
+        
+        if ( menuItemId ) {
+          menuItemIdForCheck = menuItemId;
+        } 
+        else {
+          menuItemIdForCheck = NaN;
+        }
+        
+        if ( !Number.isFinite(menuItemIdForCheck) && !menuItemName ) {
           throw badRequest(`items[${idx}] must include menuItemId or menuItemName`);
         }
 
         let menuRow;
-        if (Number.isFinite(menuItemId)) {
+        
+        if ( Number.isFinite(menuItemId) ) {
           const rows = await conn.query(
             `
             SELECT menu_item_id AS menuItemId, name AS menuItemName, price AS unitPrice
@@ -122,9 +208,12 @@ student1Router.post("/student1/sql/place_order", async (req, res, next) => {
             `,
             [menuItemId, restaurantId]
           );
-          if (!rows.length) throw notFound(`menu item not found for items[${idx}]`);
+          if ( !rows.length ) {
+            throw notFound(`menu item not found for items[${idx}]`);
+          }
           menuRow = rows[0];
-        } else {
+        } 
+        else {
           const rows = await conn.query(
             `
             SELECT menu_item_id AS menuItemId, name AS menuItemName, price AS unitPrice
@@ -134,14 +223,18 @@ student1Router.post("/student1/sql/place_order", async (req, res, next) => {
             `,
             [restaurantId, menuItemName]
           );
-          if (!rows.length) throw notFound(`menu item not found for items[${idx}]`);
+          if ( !rows.length ) {
+            throw notFound(`menu item not found for items[${idx}]`);
+          }
           menuRow = rows[0];
         }
 
         const resolvedMenuItemId = Number(menuRow.menuItemId);
         const resolvedMenuItemName = menuRow.menuItemName;
         const unitPrice = Number(menuRow.unitPrice);
-        if (!Number.isFinite(unitPrice) || unitPrice < 0) throw new Error("invalid unit price in DB");
+        if ( !Number.isFinite(unitPrice) || unitPrice < 0 ) {
+          throw new Error("invalid unit price in DB");
+        }
 
         const lineCents = priceToCents(unitPrice, `items[${idx}].unitPrice`) * quantity;
         totalCents += lineCents;
@@ -176,20 +269,42 @@ student1Router.post("/student1/sql/place_order", async (req, res, next) => {
     });
 
     res.json({ ok: true, order });
-  } catch (e) {
+  } 
+  catch (e) {
     next(e);
   }
 });
 
-student1Router.post("/student1/sql/pay", async (req, res, next) => {
+
+
+student1Router.post("/student1/sql/pay", async function(req, res, next) {
   try {
-    const orderId = req.body?.orderId ? Number(req.body.orderId) : NaN;
-    const paymentMethod = req.body?.paymentMethod ? String(req.body.paymentMethod) : "";
+    let orderId;
+    
+    if ( req.body?.orderId ) {
+      orderId = Number(req.body.orderId);
+    } 
+    else {
+      orderId = NaN;
+    }
+    
+    let paymentMethod;
+    
+    if ( req.body?.paymentMethod ) {
+      paymentMethod = String(req.body.paymentMethod);
+    } 
+    else {
+      paymentMethod = "";
+    }
 
-    if (!Number.isFinite(orderId)) throw badRequest("orderId is required");
-    if (!paymentMethod) throw badRequest("paymentMethod is required");
+    if ( !Number.isFinite(orderId) ) {
+      throw badRequest("orderId is required");
+    }
+    if ( !paymentMethod ) {
+      throw badRequest("paymentMethod is required");
+    }
 
-    const payment = await withTx(async (conn) => {
+    const payment = await withTx(async function(conn) {
       const orders = await conn.query(
         `
         SELECT order_id AS orderId, status, total_amount AS totalAmount
@@ -199,9 +314,13 @@ student1Router.post("/student1/sql/pay", async (req, res, next) => {
         `,
         [orderId]
       );
-      if (!orders.length) throw notFound("order not found");
+      if ( !orders.length ) {
+        throw notFound("order not found");
+      }
       const totalAmount = Number(orders[0].totalAmount);
-      if (!Number.isFinite(totalAmount)) throw new Error("invalid totalAmount in DB");
+      if ( !Number.isFinite(totalAmount) ) {
+        throw new Error("invalid totalAmount in DB");
+      }
 
       const existing = await conn.query(
         `
@@ -213,19 +332,23 @@ student1Router.post("/student1/sql/pay", async (req, res, next) => {
         [orderId]
       );
 
-      if (existing.length && existing[0].paidAt != null) {
+
+      if ( existing.length && existing[0].paidAt != null ) {
         throw conflict("order already paid");
       }
 
+
       const now = new Date();
-      if (!existing.length) {
+      
+      if ( !existing.length ) {
         await conn.query("INSERT INTO payment (order_id, amount, payment_method, paid_at) VALUES (?, ?, ?, ?)", [
           orderId,
           totalAmount,
           paymentMethod,
           now
         ]);
-      } else {
+      } 
+      else {
         await conn.query(
           "UPDATE payment SET amount = ?, payment_method = ?, paid_at = IFNULL(paid_at, ?) WHERE order_id = ?",
           [totalAmount, paymentMethod, now, orderId]
@@ -250,32 +373,46 @@ student1Router.post("/student1/sql/pay", async (req, res, next) => {
     });
 
     res.json({ ok: true, payment });
-  } catch (e) {
+  } 
+  catch (e) {
     next(e);
   }
 });
 
-student1Router.get("/student1/sql/report", async (req, res, next) => {
+
+
+student1Router.get("/student1/sql/report", async function(req, res, next) {
   try {
-    const restaurantName = req.query.restaurantName ? String(req.query.restaurantName) : "";
-    if (!restaurantName) throw badRequest("restaurantName is required");
+    let restaurantName;
+    
+    if ( req.query.restaurantName ) {
+      restaurantName = String(req.query.restaurantName);
+    } 
+    else {
+      restaurantName = "";
+    }
+    if ( !restaurantName ) {
+      throw badRequest("restaurantName is required");
+    }
 
     const from = parseIsoDateOrNull(req.query.from, "from");
     const to = parseIsoDateOrNull(req.query.to, "to");
 
     const params = [restaurantName];
     let whereExtra = "";
-    if (from) {
+    
+    if ( from ) {
       whereExtra += " AND o.created_at >= ? ";
       params.push(from);
     }
-    if (to) {
+    
+    if ( to ) {
       whereExtra += " AND o.created_at <= ? ";
       params.push(to);
     }
 
-    const rows = await withConn((conn) =>
-      conn.query(
+    const rows = await withConn(function(conn) {
+      return conn.query(
         `
         SELECT
           r.name AS restaurantName,
@@ -298,53 +435,107 @@ student1Router.get("/student1/sql/report", async (req, res, next) => {
         ORDER BY o.created_at DESC
         `,
         params
-      )
-    );
+      );
+    });
 
     res.json({ ok: true, rows });
-  } catch (e) {
+  } 
+  catch (e) {
     next(e);
   }
 });
+
+
 
 // -------------------------
 // Student 1 - MongoDB
 // Use case: Place order + pay
 // -------------------------
 
-student1Router.post("/student1/mongo/place_order", async (req, res, next) => {
+student1Router.post("/student1/mongo/place_order", async function(req, res, next) {
   try {
-    const customerEmail = req.body?.customerEmail ? String(req.body.customerEmail) : "";
-    const restaurantName = req.body?.restaurantName ? String(req.body.restaurantName) : "";
-    const items = Array.isArray(req.body?.items) ? req.body.items : null;
+    let customerEmail;
+    
+    if ( req.body?.customerEmail ) {
+      customerEmail = String(req.body.customerEmail);
+    } 
+    else {
+      customerEmail = "";
+    }
+    
+    let restaurantName;
+    
+    if ( req.body?.restaurantName ) {
+      restaurantName = String(req.body.restaurantName);
+    } 
+    else {
+      restaurantName = "";
+    }
+    
+    let items;
+    
+    if ( Array.isArray(req.body?.items) ) {
+      items = req.body.items;
+    } 
+    else {
+      items = null;
+    }
 
-    if (!customerEmail) throw badRequest("customerEmail is required");
-    if (!restaurantName) throw badRequest("restaurantName is required");
-    if (!items || !items.length) throw badRequest("items must be a non-empty array");
+    if ( !customerEmail ) {
+      throw badRequest("customerEmail is required");
+    }
+    if ( !restaurantName ) {
+      throw badRequest("restaurantName is required");
+    }
+    if ( !items || !items.length ) {
+      throw badRequest("items must be a non-empty array");
+    }
 
     const { db } = await getMongo();
 
     const customer = await db.collection("people").findOne({ type: "customer", email: customerEmail });
-    if (!customer) throw notFound("customer not found");
+    if ( !customer ) {
+      throw notFound("customer not found");
+    }
 
     const restaurant = await db.collection("restaurants").findOne({ name: restaurantName });
-    if (!restaurant) throw notFound("restaurant not found");
+    if ( !restaurant ) {
+      throw notFound("restaurant not found");
+    }
 
     let totalCents = 0;
-    const normalizedItems = items.map((it, idx) => {
-      const name = it?.name != null && String(it.name).trim() !== "" ? String(it.name) : null;
+    const normalizedItems = items.map(function(it, idx) {
+      let name;
+      
+      if ( it?.name != null && String(it.name).trim() !== "" ) {
+        name = String(it.name);
+      } 
+      else {
+        name = null;
+      }
       const quantity = toPositiveInt(it?.quantity, `items[${idx}].quantity`);
       const unitPriceCents = priceToCents(it?.unitPrice, `items[${idx}].unitPrice`);
       const unitPrice = centsToAmount(unitPriceCents);
-      if (!name) throw badRequest(`items[${idx}].name is required`);
+      if ( !name ) {
+        throw badRequest(`items[${idx}].name is required`);
+      }
       totalCents += unitPriceCents * quantity;
       const out = {
-        menuItemId: it?.menuItemId == null ? null : Number(it.menuItemId),
+        menuItemId: function() {
+          if ( it?.menuItemId == null ) {
+            return null;
+          } 
+          else {
+            return Number(it.menuItemId);
+          }
+        }(),
         name,
         quantity,
         unitPrice
       };
-      if (out.menuItemId != null && !Number.isFinite(out.menuItemId)) throw badRequest(`items[${idx}].menuItemId must be a number`);
+      if ( out.menuItemId != null && !Number.isFinite(out.menuItemId) ) {
+        throw badRequest(`items[${idx}].menuItemId must be a number`);
+      }
       return out;
     });
 
@@ -353,10 +544,22 @@ student1Router.post("/student1/mongo/place_order", async (req, res, next) => {
 
     // I generate a numeric orderId (compatible with migrated data) and rely on a unique index for safety.
     let insertedOrderId = null;
-    for (let attempt = 0; attempt < 5; attempt++) {
+    
+    for ( let attempt = 0; attempt < 5; attempt++ ) {
       const last = await db.collection("orders").findOne({}, { sort: { orderId: -1 }, projection: { _id: 0, orderId: 1 } });
-      const nextId = (last?.orderId ? Number(last.orderId) : 0) + 1;
-      if (!Number.isFinite(nextId) || nextId <= 0) throw new Error("failed to generate orderId");
+      let baseId;
+      
+      if ( last?.orderId ) {
+        baseId = Number(last.orderId);
+      } 
+      else {
+        baseId = 0;
+      }
+      
+      const nextId = baseId + 1;
+      if ( !Number.isFinite(nextId) || nextId <= 0 ) {
+        throw new Error("failed to generate orderId");
+      }
 
       try {
         await db.collection("orders").insertOne({
@@ -376,14 +579,28 @@ student1Router.post("/student1/mongo/place_order", async (req, res, next) => {
         });
         insertedOrderId = nextId;
         break;
-      } catch (e) {
+      } 
+      catch (e) {
         // Duplicate key on unique orderId index -> retry.
-        if (e && (e.code === 11000 || String(e.message || "").includes("E11000"))) continue;
+        let errorMessage;
+        
+        if ( e.message ) {
+          errorMessage = String(e.message);
+        } 
+        else {
+          errorMessage = "";
+        }
+        
+        if ( e && (e.code === 11000 || errorMessage.includes("E11000")) ) {
+          continue;
+        }
         throw e;
       }
     }
 
-    if (!insertedOrderId) throw new Error("could not allocate a unique orderId");
+    if ( !insertedOrderId ) {
+      throw new Error("could not allocate a unique orderId");
+    }
 
     // Return the same structure as SQL for consistency
     const order = {
@@ -403,18 +620,40 @@ student1Router.post("/student1/mongo/place_order", async (req, res, next) => {
     };
 
     res.json({ ok: true, order });
-  } catch (e) {
+  } 
+  catch (e) {
     next(e);
   }
 });
 
-student1Router.post("/student1/mongo/pay", async (req, res, next) => {
-  try {
-    const orderId = req.body?.orderId ? Number(req.body.orderId) : NaN;
-    const paymentMethod = req.body?.paymentMethod ? String(req.body.paymentMethod) : "";
 
-    if (!Number.isFinite(orderId)) throw badRequest("orderId is required");
-    if (!paymentMethod) throw badRequest("paymentMethod is required");
+
+student1Router.post("/student1/mongo/pay", async function(req, res, next) {
+  try {
+    let orderId;
+    
+    if ( req.body?.orderId ) {
+      orderId = Number(req.body.orderId);
+    } 
+    else {
+      orderId = NaN;
+    }
+    
+    let paymentMethod;
+    
+    if ( req.body?.paymentMethod ) {
+      paymentMethod = String(req.body.paymentMethod);
+    } 
+    else {
+      paymentMethod = "";
+    }
+
+    if ( !Number.isFinite(orderId) ) {
+      throw badRequest("orderId is required");
+    }
+    if ( !paymentMethod ) {
+      throw badRequest("paymentMethod is required");
+    }
 
     const { db } = await getMongo();
 
@@ -436,13 +675,17 @@ student1Router.post("/student1/mongo/pay", async (req, res, next) => {
       ]
     );
 
-    if (!result.matchedCount) throw notFound("order not found in mongo (did you migrate?)");
+    if ( !result.matchedCount ) {
+      throw notFound("order not found in mongo (did you migrate?)");
+    }
 
     const updated = await db
       .collection("orders")
       .findOne({ orderId }, { projection: { _id: 0, orderId: 1, payment: 1, status: 1, totalAmount: 1 } });
 
-    if (updated?.payment?.paidAt == null) throw new Error("payment update failed");
+    if ( updated?.payment?.paidAt == null ) {
+      throw new Error("payment update failed");
+    }
 
     res.json({ ok: true, orderId: updated.orderId, status: updated.status, payment: updated.payment });
   } catch (e) {
@@ -450,10 +693,19 @@ student1Router.post("/student1/mongo/pay", async (req, res, next) => {
   }
 });
 
-student1Router.get("/student1/mongo/report", async (req, res, next) => {
+student1Router.get("/student1/mongo/report", async function(req, res, next) {
   try {
-    const restaurantName = req.query.restaurantName ? String(req.query.restaurantName) : "";
-    if (!restaurantName) throw badRequest("restaurantName is required");
+    let restaurantName;
+    
+    if ( req.query.restaurantName ) {
+      restaurantName = String(req.query.restaurantName);
+    } 
+    else {
+      restaurantName = "";
+    }
+    if ( !restaurantName ) {
+      throw badRequest("restaurantName is required");
+    }
 
     const from = parseIsoDateOrNull(req.query.from, "from");
     const to = parseIsoDateOrNull(req.query.to, "to");
@@ -461,10 +713,17 @@ student1Router.get("/student1/mongo/report", async (req, res, next) => {
     const { db } = await getMongo();
 
     const match = { "restaurant.name": restaurantName };
-    if (from || to) {
+    
+    if ( from || to ) {
       match.createdAt = {};
-      if (from) match.createdAt.$gte = from;
-      if (to) match.createdAt.$lte = to;
+      
+      if ( from ) {
+        match.createdAt.$gte = from;
+      }
+      
+      if ( to ) {
+        match.createdAt.$lte = to;
+      }
     }
 
     const rows = await db
@@ -491,50 +750,117 @@ student1Router.get("/student1/mongo/report", async (req, res, next) => {
       .toArray();
 
     res.json({ ok: true, rows });
-  } catch (e) {
+  } 
+  catch (e) {
     next(e);
   }
 });
+
+
 
 // -------------------------
 // Student 1 - MongoDB Orders Query
 // -------------------------
 
-student1Router.get("/student1/mongo/orders", async (req, res, next) => {
+student1Router.get("/student1/mongo/orders", async function(req, res, next) {
   try {
-    const customerEmail = req.query.customerEmail ? String(req.query.customerEmail) : null;
-    const limit = req.query.limit ? Number(req.query.limit) : 50;
+    let customerEmail;
+    
+    if ( req.query.customerEmail ) {
+      customerEmail = String(req.query.customerEmail);
+    } 
+    else {
+      customerEmail = null;
+    }
+    
+    let limit;
+    
+    if ( req.query.limit ) {
+      limit = Number(req.query.limit);
+    } 
+    else {
+      limit = 50;
+    }
 
     const { db } = await getMongo();
 
     const filter = {};
-    if (customerEmail) {
+    
+    if ( customerEmail ) {
       filter["customer.email"] = customerEmail;
     }
 
+    let finalLimit = Math.max(limit, 1);
+    finalLimit = Math.min(finalLimit, 200);
+    
     const orders = await db
       .collection("orders")
       .find(filter)
       .sort({ createdAt: -1 })
-      .limit(Math.min(Math.max(limit, 1), 200))
+      .limit(finalLimit)
       .toArray();
 
     // Transform MongoDB documents to match SQL format for consistency
-    const transformedOrders = orders.map(order => ({
+    const transformedOrders = orders.map(function(order) {
+      return {
       orderId: order.orderId,
       createdAt: order.createdAt,
       status: order.status,
       totalAmount: order.totalAmount,
-      restaurantName: order.restaurant?.name || null,
-      customerEmail: order.customer?.email || null,
-      deliveryStatus: order.delivery?.deliveryStatus || null,
-      assignedAt: order.delivery?.assignedAt || null,
-      riderEmail: order.delivery?.rider?.email || null,
-      paymentMethod: order.payment?.method || null
-    }));
+      restaurantName: function() {
+        if ( order.restaurant?.name ) {
+          return order.restaurant.name;
+        } 
+        else {
+          return null;
+        }
+      }(),
+      customerEmail: function() {
+        if ( order.customer?.email ) {
+          return order.customer.email;
+        } 
+        else {
+          return null;
+        }
+      }(),
+      deliveryStatus: function() {
+        if ( order.delivery?.deliveryStatus ) {
+          return order.delivery.deliveryStatus;
+        } 
+        else {
+          return null;
+        }
+      }(),
+      assignedAt: function() {
+        if ( order.delivery?.assignedAt ) {
+          return order.delivery.assignedAt;
+        } 
+        else {
+          return null;
+        }
+      }(),
+      riderEmail: function() {
+        if ( order.delivery?.rider?.email ) {
+          return order.delivery.rider.email;
+        } 
+        else {
+          return null;
+        }
+      }(),
+      paymentMethod: function() {
+        if ( order.payment?.method ) {
+          return order.payment.method;
+        } 
+        else {
+          return null;
+        }
+      }()
+      };
+    });
 
     res.json({ ok: true, orders: transformedOrders });
-  } catch (e) {
+  } 
+  catch (e) {
     next(e);
   }
 });

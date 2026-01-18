@@ -32,48 +32,60 @@ function Student1Section({ mode, actingCustomerEmail }) {
   const [loading, setLoading] = useState(false)
 
   // Load restaurants on mount
-  useEffect(() => {
+  useEffect(function() {
     loadRestaurants()
   }, [])
 
+
+
   // Load user's orders when customer email or mode changes
   useEffect(() => {
-    if (actingCustomerEmail && view === 'myorders') {
+    if ( actingCustomerEmail && view === 'myorders' ) {
       loadMyOrders()
     }
   }, [actingCustomerEmail, mode, view])
 
+
+
   // Load menu when restaurant is selected
-  useEffect(() => {
-    if (selectedRestaurant) {
+  useEffect(function() {
+    if ( selectedRestaurant ) {
       loadMenuItems(selectedRestaurant.name)
     } else {
       setMenuItems([])
     }
   }, [selectedRestaurant])
 
+
+
   const loadRestaurants = async () => {
     try {
       const response = await api.get('/restaurants')
-      if (response.data.restaurants) {
+      if ( response.data.restaurants ) {
         setRestaurants(response.data.restaurants)
       }
-    } catch (error) {
+    } 
+    catch (error) {
       console.error('Error loading restaurants:', error)
     }
   }
 
+
+
   const loadMenuItems = async (restaurantName) => {
     try {
       const response = await api.get(`/menu_items?restaurantName=${encodeURIComponent(restaurantName)}`)
-      if (response.data.menuItems) {
+      if ( response.data.menuItems ) {
         setMenuItems(response.data.menuItems)
       }
-    } catch (error) {
+    } 
+    catch (error) {
       console.error('Error loading menu items:', error)
       setMenuItems([])
     }
   }
+
+
 
   const loadMyOrders = async () => {
     if (!actingCustomerEmail) return
@@ -84,63 +96,97 @@ function Student1Section({ mode, actingCustomerEmail }) {
         ? '/orders?limit=100'
         : `/student1/${mode}/orders?customerEmail=${encodeURIComponent(actingCustomerEmail)}&limit=100`
       const response = await api.get(endpoint)
-      if (response.data.orders) {
+      if ( response.data.orders ) {
         // Filter orders for the current customer (SQL returns all orders)
         const customerOrders = mode === 'sql'
-          ? response.data.orders.filter(order => order.customerEmail === actingCustomerEmail)
+          ? response.data.orders.filter(function(order) {
+              return order.customerEmail === actingCustomerEmail;
+            })
           : response.data.orders
         setMyOrders(customerOrders)
       }
-    } catch (error) {
+    } 
+    catch (error) {
       console.error('Error loading orders:', error)
     }
   }
 
-  const addToCart = (menuItem) => {
-    const existingItem = cart.find(item => item.menuItemId === menuItem.menuItemId)
-    if (existingItem) {
-      setCart(cart.map(item => 
-        item.menuItemId === menuItem.menuItemId 
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      ))
-    } else {
+
+
+  const addToCart = function(menuItem) {
+    const existingItem = cart.find(function(item) {
+      return item.menuItemId === menuItem.menuItemId
+    })
+    
+    if ( existingItem ) {
+      setCart(cart.map(function(item) {
+        if ( item.menuItemId === menuItem.menuItemId ) {
+          return { ...item, quantity: item.quantity + 1 }
+        } 
+        else {
+          return item
+        }
+      }))
+    } 
+    else {
       setCart([...cart, { ...menuItem, quantity: 1 }])
     }
   }
 
-  const updateCartQuantity = (menuItemId, quantity) => {
-    if (quantity <= 0) {
+
+
+  const updateCartQuantity = function(menuItemId, quantity) {
+    if ( quantity <= 0 ) {
       removeFromCart(menuItemId)
-    } else {
-      setCart(cart.map(item => 
-        item.menuItemId === menuItemId ? { ...item, quantity } : item
-      ))
+    } 
+    else {
+      setCart(cart.map(function(item) {
+        if ( item.menuItemId === menuItemId ) {
+          return { ...item, quantity: quantity }
+        } 
+        else {
+          return item
+        }
+      }))
     }
   }
 
-  const removeFromCart = (menuItemId) => {
-    setCart(cart.filter(item => item.menuItemId !== menuItemId))
+
+
+  const removeFromCart = function(menuItemId) {
+    setCart(cart.filter(function(item) {
+      return item.menuItemId !== menuItemId
+    }))
   }
 
-  const clearCart = () => {
+
+
+  const clearCart = function() {
     setCart([])
   }
 
-  const calculateTotal = () => {
-    return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)
+
+
+  const calculateTotal = function() {
+    return cart.reduce(function(sum, item) {
+      return sum + (item.price * item.quantity)
+    }, 0).toFixed(2)
   }
+
+
 
   const handlePlaceOrder = async () => {
     if (!actingCustomerEmail) {
       alert('Please select an acting customer from the global selector above.')
       return
     }
+    
     if (!selectedRestaurant) {
       alert('Please select a restaurant.')
       return
     }
-    if (cart.length === 0) {
+    
+    if ( cart.length === 0 ) {
       alert('Your cart is empty.')
       return
     }
@@ -153,13 +199,14 @@ function Student1Section({ mode, actingCustomerEmail }) {
       const payload = {
         customerEmail: actingCustomerEmail,
         restaurantName: selectedRestaurant.name,
-        items: cart.map(item => {
-          if (mode === 'sql') {
+        items: cart.map(function(item) {
+          if ( mode === 'sql' ) {
             return {
               menuItemId: item.menuItemId,
               quantity: item.quantity
             }
-          } else {
+          } 
+          else {
             return {
               menuItemId: item.menuItemId,
               name: item.name,
@@ -174,17 +221,24 @@ function Student1Section({ mode, actingCustomerEmail }) {
       setOrderResult({ success: true, data: response.data })
       setCurrentOrder(response.data)
       clearCart()
-    } catch (error) {
+    } 
+    catch (error) {
       setOrderResult({ 
         success: false, 
         error: error.response?.data || { error: error.message } 
       })
-    } finally {
+    } 
+    finally {
       setLoading(false)
     }
   }
 
-  const handlePay = async (orderId, paymentMethod = 'card') => {
+
+
+  const handlePay = async function(orderId, paymentMethod) {
+    if ( paymentMethod === undefined ) {
+      paymentMethod = 'card'
+    }
     setLoading(true)
     setPayResult(null)
     
@@ -200,20 +254,24 @@ function Student1Section({ mode, actingCustomerEmail }) {
       setCurrentOrder(null)
       
       // Reload orders if on My Orders tab
-      if (view === 'myorders') {
+      if ( view === 'myorders' ) {
         await loadMyOrders()
       }
-    } catch (error) {
+    } 
+    catch (error) {
       setPayResult({ 
         success: false, 
         error: error.response?.data || { error: error.message } 
       })
-    } finally {
+    } 
+    finally {
       setLoading(false)
     }
   }
 
-  const handleReport = async (e) => {
+
+
+  const handleReport = async function(e) {
     e.preventDefault()
     setLoading(true)
     setReportResult(null)
@@ -222,53 +280,72 @@ function Student1Section({ mode, actingCustomerEmail }) {
       const endpoint = `/student1/${mode}/report`
       const params = new URLSearchParams()
       params.append('restaurantName', reportForm.restaurantName)
-      if (reportForm.from) params.append('from', reportForm.from)
-      if (reportForm.to) params.append('to', reportForm.to)
+      if ( reportForm.from ) {
+        params.append('from', reportForm.from);
+      }
+      if ( reportForm.to ) {
+        params.append('to', reportForm.to);
+      }
       
       const response = await api.get(`${endpoint}?${params}`)
       setReportResult({ success: true, data: response.data })
-    } catch (error) {
+    } 
+    catch (error) {
       setReportResult({ 
         success: false, 
         error: error.response?.data || { error: error.message } 
       })
-    } finally {
+    } 
+    finally {
       setLoading(false)
     }
   }
 
-  const getOrderStatusBadge = (order) => {
+
+
+  const getOrderStatusBadge = function(order) {
     // Check if order has been paid
     const isPaid = order.paymentMethod || order.payment
     
-    if (order.deliveryStatus === 'delivered') {
+    if ( order.deliveryStatus === 'delivered' ) {
       return <span className="badge bg-success">Delivered</span>
-    } else if (order.deliveryStatus === 'picked_up') {
+    } 
+    else if ( order.deliveryStatus === 'picked_up' ) {
       return <span className="badge bg-info">Picked Up</span>
-    } else if (order.deliveryStatus === 'assigned') {
+    } 
+    else if ( order.deliveryStatus === 'assigned' ) {
       return <span className="badge bg-warning text-dark">Assigned to Rider</span>
-    } else if (isPaid) {
+    } 
+    else if ( isPaid ) {
       return <span className="badge bg-primary">Paid</span>
-    } else {
+    } 
+    else {
       return <span className="badge bg-secondary">Awaiting Payment</span>
     }
   }
 
-  const handleSelectRestaurant = (restaurant) => {
+
+
+  const handleSelectRestaurant = function(restaurant) {
     setSelectedRestaurant(restaurant)
     setMenuView('menu')
     // Clear cart when switching restaurants to prevent mixing items
     setCart([])
   }
 
-  const handleBackToRestaurants = () => {
+
+
+  const handleBackToRestaurants = function() {
     setMenuView('restaurants')
     setSelectedRestaurant(null)
     // Clear cart when returning to restaurant list
     setCart([])
   }
 
-  const renderOrderView = () => (
+
+
+  const renderOrderView = function() {
+    return (
     <>
       <div className="row">
         <div className="col-md-8">
@@ -276,22 +353,27 @@ function Student1Section({ mode, actingCustomerEmail }) {
             <>
               <h3 className="h5 mb-3">Select Restaurant</h3>
               <div className="list-group mb-4">
-                {restaurants.map(restaurant => (
+                {restaurants.map(function(restaurant) {
+                  return (
                   <button
                     key={restaurant.restaurantId}
                     type="button"
                     className="list-group-item list-group-item-action"
-                    onClick={() => handleSelectRestaurant(restaurant)}
+                    onClick={function() {
+                      handleSelectRestaurant(restaurant)
+                    }}
                   >
                     <div className="d-flex w-100 justify-content-between">
                       <h6 className="mb-1">{restaurant.name}</h6>
                     </div>
                     <small>{restaurant.address}</small>
                   </button>
-                ))}
+                  )
+                })}
               </div>
             </>
-          ) : (
+          ) 
+          : (
             <>
               <div className="d-flex align-items-center mb-3">
                 <button
@@ -305,11 +387,14 @@ function Student1Section({ mode, actingCustomerEmail }) {
                 </button>
                 <h3 className="h5 mb-0">Menu - {selectedRestaurant?.name}</h3>
               </div>
+              
               {menuItems.length === 0 ? (
                 <div className="alert alert-info">No menu items available for this restaurant.</div>
-              ) : (
+              ) 
+              : (
                 <div className="row row-cols-1 row-cols-md-2 g-3 mb-4">
-                  {menuItems.map(item => (
+                  {menuItems.map(function(item) {
+                    return (
                     <div key={item.menuItemId} className="col">
                       <div className="card h-100">
                         <div className="card-body">
@@ -321,7 +406,9 @@ function Student1Section({ mode, actingCustomerEmail }) {
                             <span className="fw-bold text-success">€{Number(item.price).toFixed(2)}</span>
                             <button 
                               className="btn btn-sm btn-primary"
-                              onClick={() => addToCart(item)}
+                              onClick={function() {
+                                addToCart(item)
+                              }}
                             >
                               Add to Cart
                             </button>
@@ -329,12 +416,14 @@ function Student1Section({ mode, actingCustomerEmail }) {
                         </div>
                       </div>
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </>
           )}
         </div>
+
 
         <div className="col-md-4">
           <div className="card sticky-top" style={{ top: '1rem' }}>
@@ -344,10 +433,12 @@ function Student1Section({ mode, actingCustomerEmail }) {
             <div className="card-body">
               {cart.length === 0 ? (
                 <p className="text-muted text-center">Your cart is empty</p>
-              ) : (
+              ) 
+              : (
                 <>
                   <div className="list-group list-group-flush mb-3">
-                    {cart.map(item => (
+                    {cart.map(function(item) {
+                      return (
                       <div key={item.menuItemId} className="list-group-item px-0">
                         <div className="d-flex justify-content-between align-items-start">
                           <div className="flex-grow-1">
@@ -356,7 +447,9 @@ function Student1Section({ mode, actingCustomerEmail }) {
                           </div>
                           <button
                             className="btn btn-sm btn-outline-danger"
-                            onClick={() => removeFromCart(item.menuItemId)}
+                            onClick={function() {
+                              removeFromCart(item.menuItemId)
+                            }}
                           >
                             ×
                           </button>
@@ -364,7 +457,9 @@ function Student1Section({ mode, actingCustomerEmail }) {
                         <div className="input-group input-group-sm mt-2">
                           <button
                             className="btn btn-outline-secondary"
-                            onClick={() => updateCartQuantity(item.menuItemId, item.quantity - 1)}
+                            onClick={function() {
+                              updateCartQuantity(item.menuItemId, item.quantity - 1)
+                            }}
                           >
                             -
                           </button>
@@ -372,18 +467,23 @@ function Student1Section({ mode, actingCustomerEmail }) {
                             type="number"
                             className="form-control text-center"
                             value={item.quantity}
-                            onChange={(e) => updateCartQuantity(item.menuItemId, parseInt(e.target.value) || 1)}
+                            onChange={function(e) {
+                              updateCartQuantity(item.menuItemId, parseInt(e.target.value) || 1)
+                            }}
                             min="1"
                           />
                           <button
                             className="btn btn-outline-secondary"
-                            onClick={() => updateCartQuantity(item.menuItemId, item.quantity + 1)}
+                            onClick={function() {
+                              updateCartQuantity(item.menuItemId, item.quantity + 1)
+                            }}
                           >
                             +
                           </button>
                         </div>
                       </div>
-                    ))}
+                      )
+                    })}
                   </div>
                   
                   <div className="border-top pt-3 mb-3">
@@ -413,6 +513,7 @@ function Student1Section({ mode, actingCustomerEmail }) {
         </div>
       </div>
 
+
       {orderResult && (
         <div className={`alert mt-3 ${orderResult.success ? 'alert-success' : 'alert-danger'}`}>
           {orderResult.success ? (
@@ -421,7 +522,8 @@ function Student1Section({ mode, actingCustomerEmail }) {
               <p>Order ID: <strong>#{orderResult.data.orderId || orderResult.data.order?.orderId}</strong></p>
               <p className="mb-0">You can now pay for this order below or view it in the "My Orders" tab.</p>
             </>
-          ) : (
+          ) 
+          : (
             <>
               <div>Error: {orderResult.error.error}</div>
               {orderResult.error.stack && <pre className="mt-2 mb-0 small">{orderResult.error.stack}</pre>}
@@ -430,16 +532,23 @@ function Student1Section({ mode, actingCustomerEmail }) {
         </div>
       )}
 
+
       {currentOrder && (
-        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={() => setCurrentOrder(null)}>
-          <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
+        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={function() {
+          setCurrentOrder(null)
+        }}>
+          <div className="modal-dialog modal-dialog-centered" onClick={function(e) {
+            e.stopPropagation()
+          }}>
             <div className="modal-content">
               <div className="modal-header bg-warning">
                 <h5 className="modal-title">Complete Payment</h5>
                 <button
                   type="button"
                   className="btn-close"
-                  onClick={() => setCurrentOrder(null)}
+                  onClick={function() {
+                    setCurrentOrder(null)
+                  }}
                   disabled={loading}
                 ></button>
               </div>
@@ -464,7 +573,9 @@ function Student1Section({ mode, actingCustomerEmail }) {
                   <div className="d-grid gap-2">
                     <button
                       className="btn btn-primary btn-lg"
-                      onClick={() => handlePay(currentOrder.orderId || currentOrder.order?.orderId, 'card')}
+                      onClick={function() {
+                        handlePay(currentOrder.orderId || currentOrder.order?.orderId, 'card')
+                      }}
                       disabled={loading}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-credit-card me-2" viewBox="0 0 16 16" style={{ verticalAlign: 'text-bottom' }}>
@@ -475,7 +586,9 @@ function Student1Section({ mode, actingCustomerEmail }) {
                     </button>
                     <button
                       className="btn btn-success btn-lg"
-                      onClick={() => handlePay(currentOrder.orderId || currentOrder.order?.orderId, 'cash')}
+                      onClick={function() {
+                        handlePay(currentOrder.orderId || currentOrder.order?.orderId, 'cash')
+                      }}
                       disabled={loading}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-cash me-2" viewBox="0 0 16 16" style={{ verticalAlign: 'text-bottom' }}>
@@ -486,7 +599,9 @@ function Student1Section({ mode, actingCustomerEmail }) {
                     </button>
                     <button
                       className="btn btn-info btn-lg"
-                      onClick={() => handlePay(currentOrder.orderId || currentOrder.order?.orderId, 'paypal')}
+                      onClick={function() {
+                        handlePay(currentOrder.orderId || currentOrder.order?.orderId, 'paypal')
+                      }}
                       disabled={loading}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-paypal me-2" viewBox="0 0 16 16" style={{ verticalAlign: 'text-bottom' }}>
@@ -510,12 +625,15 @@ function Student1Section({ mode, actingCustomerEmail }) {
               <p className="mb-2">Your order has been paid and is now being prepared.</p>
               <button 
                 className="btn btn-sm btn-success"
-                onClick={() => setView('myorders')}
+                onClick={function() {
+                  setView('myorders')
+                }}
               >
                 View in My Orders
               </button>
             </>
-          ) : (
+          ) 
+          : (
             <>
               <div>Error: {payResult.error.error}</div>
               {payResult.error.stack && <pre className="mt-2 mb-0 small">{payResult.error.stack}</pre>}
@@ -524,9 +642,13 @@ function Student1Section({ mode, actingCustomerEmail }) {
         </div>
       )}
     </>
-  )
+    )
+  }
 
-  const renderMyOrdersView = () => (
+
+
+  const renderMyOrdersView = function() {
+    return (
     <>
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h3 className="h5 mb-0">My Orders</h3>
@@ -561,7 +683,7 @@ function Student1Section({ mode, actingCustomerEmail }) {
               </tr>
             </thead>
             <tbody>
-              {myOrders.map(order => {
+              {myOrders.map(function(order) {
                 const isPaid = order.paymentMethod || order.payment
                 return (
                   <tr key={order.orderId}>
@@ -575,38 +697,46 @@ function Student1Section({ mode, actingCustomerEmail }) {
                         <div className="btn-group btn-group-sm" role="group">
                           <button
                             className="btn btn-outline-primary"
-                            onClick={() => handlePay(order.orderId, 'card')}
+                            onClick={function() {
+                              handlePay(order.orderId, 'card')
+                            }}
                             disabled={loading}
                           >
                             Pay (Card)
                           </button>
                           <button
                             className="btn btn-outline-primary"
-                            onClick={() => handlePay(order.orderId, 'cash')}
+                            onClick={function() {
+                              handlePay(order.orderId, 'cash')
+                            }}
                             disabled={loading}
                           >
                             Cash
                           </button>
                           <button
                             className="btn btn-outline-primary"
-                            onClick={() => handlePay(order.orderId, 'paypal')}
+                            onClick={function() {
+                              handlePay(order.orderId, 'paypal')
+                            }}
                             disabled={loading}
                           >
                             PayPal
                           </button>
                         </div>
                       )}
+                      
                       {isPaid && (
                         <span className="text-success small">✓ Paid</span>
                       )}
                     </td>
                   </tr>
-                )
-              })}
+                  )
+                })}
             </tbody>
           </table>
         </div>
       )}
+
 
       {payResult && (
         <div className={`alert mt-3 ${payResult.success ? 'alert-success' : 'alert-danger'}`}>
@@ -621,9 +751,13 @@ function Student1Section({ mode, actingCustomerEmail }) {
         </div>
       )}
     </>
-  )
+    )
+  }
 
-  const renderAnalyticsView = () => (
+
+
+  const renderAnalyticsView = function() {
+    return (
     <>
       <h3 className="h5 mb-3">Order Analytics Report</h3>
       <p className="text-muted">View order history and payment data by restaurant.</p>
@@ -635,15 +769,19 @@ function Student1Section({ mode, actingCustomerEmail }) {
             <select
               className="form-select"
               value={reportForm.restaurantName}
-              onChange={(e) => setReportForm({ ...reportForm, restaurantName: e.target.value })}
+              onChange={function(e) {
+                setReportForm({ ...reportForm, restaurantName: e.target.value })
+              }}
               required
             >
               <option value="">Select a restaurant...</option>
-              {restaurants.map(restaurant => (
-                <option key={restaurant.name} value={restaurant.name}>
-                  {restaurant.name}
-                </option>
-              ))}
+              {restaurants.map(function(restaurant) {
+                return (
+                  <option key={restaurant.name} value={restaurant.name}>
+                    {restaurant.name}
+                  </option>
+                  )
+                })}
             </select>
           </div>
           
@@ -653,7 +791,9 @@ function Student1Section({ mode, actingCustomerEmail }) {
               type="datetime-local"
               className="form-control"
               value={reportForm.from}
-              onChange={(e) => setReportForm({ ...reportForm, from: e.target.value })}
+              onChange={function(e) {
+                setReportForm({ ...reportForm, from: e.target.value })
+              }}
             />
           </div>
           
@@ -663,7 +803,9 @@ function Student1Section({ mode, actingCustomerEmail }) {
               type="datetime-local"
               className="form-control"
               value={reportForm.to}
-              onChange={(e) => setReportForm({ ...reportForm, to: e.target.value })}
+              onChange={function(e) {
+                setReportForm({ ...reportForm, to: e.target.value })
+              }}
             />
           </div>
         </div>
@@ -683,27 +825,35 @@ function Student1Section({ mode, actingCustomerEmail }) {
                   <table className="table table-striped table-bordered table-hover table-sm">
                     <thead className="table-dark">
                       <tr>
-                        {Object.keys(reportResult.data.rows[0]).map(key => (
-                          <th key={key}>{key}</th>
-                        ))}
+                        {Object.keys(reportResult.data.rows[0]).map(function(key) {
+                          return (
+                            <th key={key}>{key}</th>
+                            )
+                          })}
                       </tr>
                     </thead>
                     <tbody>
-                      {reportResult.data.rows.map((row, idx) => (
-                        <tr key={idx}>
-                          {Object.values(row).map((val, i) => (
-                            <td key={i}>{val != null ? JSON.stringify(val) : '-'}</td>
-                          ))}
-                        </tr>
-                      ))}
+                      {reportResult.data.rows.map(function(row, idx) {
+                        return (
+                          <tr key={idx}>
+                            {Object.values(row).map(function(val, i) {
+                              return (
+                                <td key={i}>{val != null ? JSON.stringify(val) : '-'}</td>
+                                )
+                              })}
+                          </tr>
+                          )
+                        })}
                     </tbody>
                   </table>
                 </div>
-              ) : (
+              ) 
+              : (
                 <p className="mt-2 mb-0">No data found for the selected criteria.</p>
               )}
             </>
-          ) : (
+          ) 
+          : (
             <>
               <div>Error: {reportResult.error.error}</div>
               {reportResult.error.stack && <pre className="mt-2 mb-0 small">{reportResult.error.stack}</pre>}
@@ -712,7 +862,10 @@ function Student1Section({ mode, actingCustomerEmail }) {
         </div>
       )}
     </>
-  )
+    )
+  }
+
+
 
   return (
     <div className="card mb-4">
@@ -723,21 +876,27 @@ function Student1Section({ mode, actingCustomerEmail }) {
             <button
               type="button"
               className={`btn btn-sm ${view === 'order' ? 'btn-primary' : 'btn-outline-primary'}`}
-              onClick={() => setView('order')}
+              onClick={function() {
+                setView('order')
+              }}
             >
               Browse & Order
             </button>
             <button
               type="button"
               className={`btn btn-sm ${view === 'myorders' ? 'btn-primary' : 'btn-outline-primary'}`}
-              onClick={() => setView('myorders')}
+              onClick={function() {
+                setView('myorders')
+              }}
             >
               My Orders
             </button>
             <button
               type="button"
               className={`btn btn-sm ${view === 'analytics' ? 'btn-primary' : 'btn-outline-primary'}`}
-              onClick={() => setView('analytics')}
+              onClick={function() {
+                setView('analytics')
+              }}
             >
               Analytics
             </button>
@@ -755,7 +914,7 @@ function Student1Section({ mode, actingCustomerEmail }) {
         {view === 'analytics' && renderAnalyticsView()}
       </div>
     </div>
-  )
-}
+    )
+  }
 
 export default Student1Section

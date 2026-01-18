@@ -14,21 +14,27 @@ const pool = mariadb.createPool({
 
 async function withConn(fn) {
   const conn = await pool.getConnection();
+  
   try {
     return await fn(conn);
-  } finally {
+  } 
+  finally {
     conn.release();
   }
 }
 
+
+
 async function withTx(fn) {
-  return withConn(async (conn) => {
+  return withConn(async function(conn) {
     await conn.beginTransaction();
+    
     try {
       const result = await fn(conn);
       await conn.commit();
       return result;
-    } catch (e) {
+    } 
+    catch (e) {
       await conn.rollback();
       throw e;
     }

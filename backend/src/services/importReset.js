@@ -8,7 +8,7 @@ function randInt(rng, min, max) {
 }
 
 function pick(rng, arr) {
-  if (!Array.isArray(arr) || arr.length === 0) {
+  if ( !Array.isArray(arr) || arr.length === 0 ) {
     // I fail loudly (with stack) so empty-pick bugs are always traceable.
     throw new Error("pick() called with empty array");
   }
@@ -49,13 +49,13 @@ async function clearAll(conn) {
     "person"
   ];
 
-  for (const t of deleteOrder) {
+  for ( const t of deleteOrder ) {
     await conn.query(`DELETE FROM ${t}`);
   }
 
   // I reset auto-increment counters so IDs start from 1 again after reset.
   const autoIncTables = ["person", "restaurant", "menu_item", "category", "`order`", "order_item", "payment", "delivery"];
-  for (const t of autoIncTables) {
+  for ( const t of autoIncTables ) {
     await conn.query(`ALTER TABLE ${t} AUTO_INCREMENT = 1`);
   }
 }
@@ -76,13 +76,30 @@ async function clearMongoAfterSqlReset() {
 }
 
 async function importResetMariaDb() {
-  const inserted = await withTx(async (conn) => {
+  const inserted = await withTx(async function(conn) {
     // I (1) ensure schema exists, (2) clear old data, then (3) insert fresh randomized data.
     await recreateSchema(conn);
     await clearAll(conn);
 
-    const seed = process.env.SEED ? Number(process.env.SEED) : Date.now();
-    const rng = makeRng(Number.isFinite(seed) ? seed : Date.now());
+    let seed;
+    
+    if ( process.env.SEED ) {
+      seed = Number(process.env.SEED);
+    } 
+    else {
+      seed = Date.now();
+    }
+    
+    let finalSeed;
+    
+    if ( Number.isFinite(seed) ) {
+      finalSeed = seed;
+    } 
+    else {
+      finalSeed = Date.now();
+    }
+    
+    const rng = makeRng(finalSeed);
 
     // Vienna-based demo data (restaurants + realistic Vienna-style addresses)
     const restaurantNames = [
@@ -122,8 +139,15 @@ async function importResetMariaDb() {
 
     // Restaurants
     const restaurantIds = [];
-    for (let i = 0; i < 10; i++) {
-      const name = restaurantNames[i] || `Restaurant ${i + 1}`;
+    for ( let i = 0; i < 10; i++ ) {
+      let name;
+      
+      if ( restaurantNames[i] ) {
+        name = restaurantNames[i];
+      } 
+      else {
+        name = `Restaurant ${i + 1}`;
+      }
       const address = makeViennaAddress(rng);
       const r = await conn.query("INSERT INTO restaurant (name, address) VALUES (?, ?)", [name, address]);
       restaurantIds.push(Number(r.insertId));
@@ -131,7 +155,7 @@ async function importResetMariaDb() {
 
     // Categories
     const categoryIdByName = new Map();
-    for (const c of categories) {
+    for ( const c of categories ) {
       const r = await conn.query("INSERT INTO category (name) VALUES (?)", [c]);
       categoryIdByName.set(c, Number(r.insertId));
     }
@@ -142,16 +166,25 @@ async function importResetMariaDb() {
     // with zero items. Order generation later picks a menu item for the chosen restaurant, so
     // we guarantee every restaurant gets at least 1 menu item.
     const menuItemTotal = 60;
-    if (restaurantIds.length > menuItemTotal) {
+    if ( restaurantIds.length > menuItemTotal ) {
       throw new Error(`Cannot generate menu items: ${restaurantIds.length} restaurants but only ${menuItemTotal} items`);
     }
 
     const menuItemIds = [];
-    const itemsByRestaurantId = new Map(restaurantIds.map((rid) => [rid, []]));
+    const itemsByRestaurantId = new Map(restaurantIds.map(function(rid) {
+      return [rid, []];
+    }));
 
-    for (let i = 0; i < menuItemTotal; i++) {
+    for ( let i = 0; i < menuItemTotal; i++ ) {
       // First N items cover all restaurants; remaining items are randomized.
-      const restaurantId = i < restaurantIds.length ? restaurantIds[i] : pick(rng, restaurantIds);
+      let restaurantId;
+      
+      if ( i < restaurantIds.length ) {
+        restaurantId = restaurantIds[i];
+      } 
+      else {
+        restaurantId = pick(rng, restaurantIds);
+      }
       const name = `Item ${i + 1}`;
       const description = `Tasty ${name.toLowerCase()}`;
       const price = (randInt(rng, 500, 2500) / 100).toFixed(2);
@@ -170,9 +203,9 @@ async function importResetMariaDb() {
         menuItemId,
         categoryIdByName.get(c1)
       ]);
-      if (rng() < 0.3) {
+      if ( rng() < 0.3 ) {
         const c2 = pick(rng, categories);
-        if (c2 !== c1) {
+        if ( c2 !== c1 ) {
           await conn.query("INSERT INTO menu_item_category (menu_item_id, category_id) VALUES (?, ?)", [
             menuItemId,
             categoryIdByName.get(c2)
@@ -183,7 +216,7 @@ async function importResetMariaDb() {
 
     // People: customers + riders
     const customerIds = [];
-    for (let i = 0; i < 20; i++) {
+    for ( let i = 0; i < 20; i++ ) {
       const name = `Customer ${i + 1}`;
       const email = `customer${i + 1}@example.com`;
       const phone = `+43 1 ${randInt(rng, 1000000, 9999999)}`;
@@ -198,7 +231,7 @@ async function importResetMariaDb() {
     }
 
     const riderIds = [];
-    for (let i = 0; i < 10; i++) {
+    for ( let i = 0; i < 10; i++ ) {
       const name = `Rider ${i + 1}`;
       const email = `rider${i + 1}@example.com`;
       const phone = `+43 1 ${randInt(rng, 1000000, 9999999)}`;
@@ -213,12 +246,12 @@ async function importResetMariaDb() {
     }
 
     // Riders work for restaurants (1-2 each)
-    for (const riderId of riderIds) {
+    for ( const riderId of riderIds ) {
       const r1 = pick(rng, restaurantIds);
       await conn.query("INSERT INTO rider_works_for (rider_id, restaurant_id) VALUES (?, ?)", [riderId, r1]);
-      if (rng() < 0.5) {
+      if ( rng() < 0.5 ) {
         const r2 = pick(rng, restaurantIds);
-        if (r2 !== r1) {
+        if ( r2 !== r1 ) {
           await conn.query("INSERT INTO rider_works_for (rider_id, restaurant_id) VALUES (?, ?)", [riderId, r2]);
         }
       }
@@ -230,7 +263,7 @@ async function importResetMariaDb() {
     let insertedPayments = 0;
     let insertedDeliveries = 0;
 
-    for (let i = 0; i < 30; i++) {
+    for ( let i = 0; i < 30; i++ ) {
       const restaurantId = pick(rng, restaurantIds);
       const customerId = pick(rng, customerIds);
 
@@ -245,14 +278,22 @@ async function importResetMariaDb() {
       const orderId = Number(o.insertId);
       insertedOrders++;
 
-      const itemsForRestaurant = itemsByRestaurantId.get(restaurantId) || [];
-      if (!itemsForRestaurant.length) {
+      const itemsForRestaurantRaw = itemsByRestaurantId.get(restaurantId);
+      let itemsForRestaurant;
+      
+      if ( itemsForRestaurantRaw ) {
+        itemsForRestaurant = itemsForRestaurantRaw;
+      } 
+      else {
+        itemsForRestaurant = [];
+      }
+      if ( !itemsForRestaurant.length ) {
         throw new Error(`No menu items exist for restaurantId=${restaurantId} (demo data invariant violated)`);
       }
       const itemCount = randInt(rng, 1, 5);
 
       let total = 0;
-      for (let j = 0; j < itemCount; j++) {
+      for ( let j = 0; j < itemCount; j++ ) {
         const mi = pick(rng, itemsForRestaurant);
         const qty = randInt(rng, 1, 3);
         const unitPrice = mi.price;
@@ -278,11 +319,26 @@ async function importResetMariaDb() {
       insertedPayments++;
 
       // Delivery: exists for some orders, and some are unassigned (so Student 2 can assign).
-      if (rng() < 0.6) {
+      if ( rng() < 0.6 ) {
         const deliveryStatus = pick(rng, ["created", "assigned", "picked_up", "delivered"]);
         const isAssigned = deliveryStatus !== "created";
-        const riderId = isAssigned ? pick(rng, riderIds) : null;
-        const assignedAt = isAssigned ? new Date(paidAt.getTime() + randInt(rng, 5, 45) * 60 * 1000) : null;
+        let riderId;
+        
+        if ( isAssigned ) {
+          riderId = pick(rng, riderIds);
+        } 
+        else {
+          riderId = null;
+        }
+        
+        let assignedAt;
+        
+        if ( isAssigned ) {
+          assignedAt = new Date(paidAt.getTime() + randInt(rng, 5, 45) * 60 * 1000);
+        } 
+        else {
+          assignedAt = null;
+        }
 
         await conn.query(
           "INSERT INTO delivery (order_id, rider_id, assigned_at, delivery_status) VALUES (?, ?, ?, ?)",

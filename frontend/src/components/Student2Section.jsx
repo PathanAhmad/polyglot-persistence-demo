@@ -27,19 +27,21 @@ function Student2Section({ mode, actingRiderEmail }) {
   const [loading, setLoading] = useState(false)
 
   // Load data when mode or actingRiderEmail changes
-  useEffect(() => {
-    if (view === 'available') {
+  useEffect(function() {
+    if ( view === 'available' ) {
       loadAvailableOrders()
-    } else if (view === 'active') {
+    } 
+    else if ( view === 'active' ) {
       loadActiveDeliveries()
-    } else if (view === 'completed') {
+    } 
+    else if ( view === 'completed' ) {
       loadCompletedDeliveries()
     }
   }, [mode, view, actingRiderEmail])
 
   // Set actingRiderEmail in report form when it changes
-  useEffect(() => {
-    if (actingRiderEmail) {
+  useEffect(function() {
+    if ( actingRiderEmail ) {
       setReportForm(prev => ({ ...prev, riderEmail: actingRiderEmail }))
     }
   }, [actingRiderEmail])
@@ -47,13 +49,27 @@ function Student2Section({ mode, actingRiderEmail }) {
   const loadAvailableOrders = async () => {
     try {
       // Use mode-specific endpoint to fetch orders from correct database
-      const endpoint = mode === 'sql' ? '/orders?unassigned=true&status=preparing&limit=50' : `/student2/${mode}/orders?status=preparing&limit=50`
+      let endpoint;
+      
+      if ( mode === 'sql' ) {
+        endpoint = '/orders?unassigned=true&status=preparing&limit=50';
+      } 
+      else {
+        endpoint = `/student2/${mode}/orders?status=preparing&limit=50`;
+      }
       const response = await api.get(endpoint)
-      if (response.data.orders) {
+      if ( response.data.orders ) {
         // Filter unassigned orders for Mongo mode
-        const orders = mode === 'mongo' 
-          ? response.data.orders.filter(o => !o.riderEmail)
-          : response.data.orders
+        let orders;
+        
+        if ( mode === 'mongo' ) {
+          orders = response.data.orders.filter(function(o) {
+            return !o.riderEmail;
+          });
+        } 
+        else {
+          orders = response.data.orders;
+        }
         setAvailableOrders(orders)
       }
     } catch (error) {
@@ -72,7 +88,7 @@ function Student2Section({ mode, actingRiderEmail }) {
         ? `/orders?riderEmail=${encodeURIComponent(actingRiderEmail)}&excludeDelivered=true&limit=50`
         : `/student2/${mode}/orders?riderEmail=${encodeURIComponent(actingRiderEmail)}&excludeDelivered=true&limit=50`
       const response = await api.get(endpoint)
-      if (response.data.orders) {
+      if ( response.data.orders ) {
         setActiveDeliveries(response.data.orders)
       }
     } catch (error) {
@@ -91,7 +107,7 @@ function Student2Section({ mode, actingRiderEmail }) {
         ? `/orders?riderEmail=${encodeURIComponent(actingRiderEmail)}&deliveryStatus=delivered&limit=50`
         : `/student2/${mode}/orders?riderEmail=${encodeURIComponent(actingRiderEmail)}&deliveryStatus=delivered&limit=50`
       const response = await api.get(endpoint)
-      if (response.data.orders) {
+      if ( response.data.orders ) {
         setCompletedDeliveries(response.data.orders)
       }
     } catch (error) {
@@ -124,16 +140,25 @@ function Student2Section({ mode, actingRiderEmail }) {
       setAssignResult({ success: true, data: response.data })
       
       // Remove from current list
-      if (view === 'available') {
-        setAvailableOrders(prev => prev.filter(o => o.orderId !== selectedOrder.orderId))
-      } else if (view === 'active') {
-        setActiveDeliveries(prev => prev.filter(o => o.orderId !== selectedOrder.orderId))
+      if ( view === 'available' ) {
+        setAvailableOrders(function(prev) {
+          return prev.filter(function(o) {
+            return o.orderId !== selectedOrder.orderId;
+          });
+        })
+      } 
+      else if ( view === 'active' ) {
+        setActiveDeliveries(function(prev) {
+          return prev.filter(function(o) {
+            return o.orderId !== selectedOrder.orderId;
+          });
+        })
       }
       
       setSelectedOrder(null)
       
       // Switch to appropriate view based on delivery status
-      if (deliveryStatus === 'delivered') {
+      if ( deliveryStatus === 'delivered' ) {
         // Reload completed and switch to completed view
         await loadCompletedDeliveries()
         setView('completed')
@@ -161,9 +186,15 @@ function Student2Section({ mode, actingRiderEmail }) {
       const endpoint = `/student2/${mode}/report`
       const params = new URLSearchParams()
       params.append('riderEmail', reportForm.riderEmail)
-      if (reportForm.from) params.append('from', reportForm.from)
-      if (reportForm.to) params.append('to', reportForm.to)
-      if (reportForm.deliveryStatus) params.append('deliveryStatus', reportForm.deliveryStatus)
+      if ( reportForm.from ) {
+        params.append('from', reportForm.from);
+      }
+      if ( reportForm.to ) {
+        params.append('to', reportForm.to);
+      }
+      if ( reportForm.deliveryStatus ) {
+        params.append('deliveryStatus', reportForm.deliveryStatus);
+      }
       
       const response = await api.get(`${endpoint}?${params}`)
       setReportResult({ success: true, data: response.data })
@@ -177,14 +208,21 @@ function Student2Section({ mode, actingRiderEmail }) {
     }
   }
 
-  const renderOrdersList = (orders, emptyMessage) => (
+  const renderOrdersList = function(orders, emptyMessage) {
+    return (
     <div className="col-md-7">
       <button 
         className="btn btn-sm btn-outline-secondary mb-3"
-        onClick={() => {
-          if (view === 'available') loadAvailableOrders()
-          else if (view === 'active') loadActiveDeliveries()
-          else if (view === 'completed') loadCompletedDeliveries()
+        onClick={function() {
+          if ( view === 'available' ) {
+            loadAvailableOrders()
+          }
+          else if ( view === 'active' ) {
+            loadActiveDeliveries()
+          }
+          else if ( view === 'completed' ) {
+            loadCompletedDeliveries()
+          }
         }}
         disabled={loading}
       >
@@ -195,15 +233,16 @@ function Student2Section({ mode, actingRiderEmail }) {
         <div className="alert alert-info">{emptyMessage}</div>
       ) : (
         <div className="list-group">
-          {orders.map(order => (
+          {orders.map(function(order) {
+            return (
             <button
               key={order.orderId}
               type="button"
               className={`list-group-item list-group-item-action ${selectedOrder?.orderId === order.orderId ? 'active' : ''}`}
-              onClick={() => {
+              onClick={function() {
                 setSelectedOrder(order)
                 // Sync deliveryStatus with the selected order's current status (Bug 1 fix)
-                if (view === 'active' && order.deliveryStatus) {
+                if ( view === 'active' && order.deliveryStatus ) {
                   setDeliveryStatus(order.deliveryStatus)
                 }
               }}
@@ -220,13 +259,16 @@ function Student2Section({ mode, actingRiderEmail }) {
                 Total: <strong>€{Number(order.totalAmount).toFixed(2)}</strong>
               </small>
             </button>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
-  )
+    );
+  }
 
-  const renderAvailableView = () => (
+  const renderAvailableView = function() {
+    return (
     <>
       <div className="alert alert-light border mb-3">
         <small className="text-muted">
@@ -264,7 +306,9 @@ function Student2Section({ mode, actingRiderEmail }) {
                     <select
                       className="form-select"
                       value={deliveryStatus}
-                      onChange={(e) => setDeliveryStatus(e.target.value)}
+                      onChange={function(e) {
+                        setDeliveryStatus(e.target.value)
+                      }}
                     >
                       <option value="assigned">Assigned (just accepted)</option>
                       <option value="picked_up">Picked Up (already collected)</option>
@@ -285,9 +329,12 @@ function Student2Section({ mode, actingRiderEmail }) {
         </div>
       </div>
     </>
-  )
+    );
+  };
+  }
 
-  const renderActiveView = () => (
+  const renderActiveView = function() {
+    return (
     <>
       <div className="alert alert-light border mb-3">
         <small className="text-muted">
@@ -327,7 +374,9 @@ function Student2Section({ mode, actingRiderEmail }) {
                     <select
                       className="form-select"
                       value={deliveryStatus}
-                      onChange={(e) => setDeliveryStatus(e.target.value)}
+                      onChange={function(e) {
+                        setDeliveryStatus(e.target.value)
+                      }}
                     >
                       <option value="assigned">Assigned</option>
                       <option value="picked_up">Picked Up</option>
@@ -349,9 +398,12 @@ function Student2Section({ mode, actingRiderEmail }) {
         </div>
       </div>
     </>
-  )
+    );
+  };
+  }
 
-  const renderCompletedView = () => (
+  const renderCompletedView = function() {
+    return (
     <>
       <div className="alert alert-light border mb-3">
         <small className="text-muted">
@@ -385,14 +437,16 @@ function Student2Section({ mode, actingRiderEmail }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {completedDeliveries.map(order => (
+                  {completedDeliveries.map(function(order) {
+                    return (
                     <tr key={order.orderId}>
                       <td><strong>#{order.orderId}</strong></td>
                       <td>{order.restaurantName}</td>
                       <td>€{Number(order.totalAmount).toFixed(2)}</td>
                       <td>{order.assignedAt ? new Date(order.assignedAt).toLocaleString() : 'N/A'}</td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -400,9 +454,12 @@ function Student2Section({ mode, actingRiderEmail }) {
         </div>
       </div>
     </>
-  )
+    );
+  };
+  }
 
-  const renderAnalyticsView = () => (
+  const renderAnalyticsView = function() {
+    return (
     <>
       <h3 className="h5 mb-3">Delivery Analytics Report</h3>
       <p className="text-muted">View delivery assignments and status by rider.</p>
@@ -415,7 +472,9 @@ function Student2Section({ mode, actingRiderEmail }) {
               type="email"
               className="form-control"
               value={reportForm.riderEmail}
-              onChange={(e) => setReportForm({ ...reportForm, riderEmail: e.target.value })}
+              onChange={function(e) {
+                setReportForm({ ...reportForm, riderEmail: e.target.value })
+              }}
               placeholder="rider@example.com"
               required
             />
@@ -429,7 +488,9 @@ function Student2Section({ mode, actingRiderEmail }) {
             <select
               className="form-select"
               value={reportForm.deliveryStatus}
-              onChange={(e) => setReportForm({ ...reportForm, deliveryStatus: e.target.value })}
+              onChange={function(e) {
+                setReportForm({ ...reportForm, deliveryStatus: e.target.value })
+              }}
             >
               <option value="">All statuses</option>
               <option value="assigned">Assigned</option>
@@ -444,7 +505,9 @@ function Student2Section({ mode, actingRiderEmail }) {
               type="datetime-local"
               className="form-control"
               value={reportForm.from}
-              onChange={(e) => setReportForm({ ...reportForm, from: e.target.value })}
+              onChange={function(e) {
+                setReportForm({ ...reportForm, from: e.target.value })
+              }}
             />
           </div>
           
@@ -454,7 +517,9 @@ function Student2Section({ mode, actingRiderEmail }) {
               type="datetime-local"
               className="form-control"
               value={reportForm.to}
-              onChange={(e) => setReportForm({ ...reportForm, to: e.target.value })}
+              onChange={function(e) {
+                setReportForm({ ...reportForm, to: e.target.value })
+              }}
             />
           </div>
         </div>
@@ -474,19 +539,25 @@ function Student2Section({ mode, actingRiderEmail }) {
                   <table className="table table-striped table-bordered table-hover table-sm">
                     <thead className="table-dark">
                       <tr>
-                        {Object.keys(reportResult.data.rows[0]).map(key => (
+                        {Object.keys(reportResult.data.rows[0]).map(function(key) {
+                          return (
                           <th key={key}>{key}</th>
-                        ))}
+                          );
+                        })}
                       </tr>
                     </thead>
                     <tbody>
-                      {reportResult.data.rows.map((row, idx) => (
+                      {reportResult.data.rows.map(function(row, idx) {
+                        return (
                         <tr key={idx}>
-                          {Object.values(row).map((val, i) => (
+                          {Object.values(row).map(function(val, i) {
+                            return (
                             <td key={i}>{val != null ? JSON.stringify(val) : '-'}</td>
-                          ))}
+                            );
+                          })}
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -514,7 +585,7 @@ function Student2Section({ mode, actingRiderEmail }) {
             <button
               type="button"
               className={`btn btn-sm ${view === 'available' ? 'btn-primary' : 'btn-outline-primary'}`}
-              onClick={() => {
+              onClick={function() {
                 setView('available')
                 setSelectedOrder(null)
                 // Reset to default for available orders (Bug 2 fix)
@@ -526,7 +597,7 @@ function Student2Section({ mode, actingRiderEmail }) {
             <button
               type="button"
               className={`btn btn-sm ${view === 'active' ? 'btn-primary' : 'btn-outline-primary'}`}
-              onClick={() => {
+              onClick={function() {
                 setView('active')
                 setSelectedOrder(null)
                 // Reset to default for active deliveries (Bug 2 fix)
@@ -538,7 +609,7 @@ function Student2Section({ mode, actingRiderEmail }) {
             <button
               type="button"
               className={`btn btn-sm ${view === 'completed' ? 'btn-primary' : 'btn-outline-primary'}`}
-              onClick={() => {
+              onClick={function() {
                 setView('completed')
                 setSelectedOrder(null)
                 // Reset delivery status for consistency
@@ -550,7 +621,7 @@ function Student2Section({ mode, actingRiderEmail }) {
             <button
               type="button"
               className={`btn btn-sm ${view === 'analytics' ? 'btn-primary' : 'btn-outline-primary'}`}
-              onClick={() => {
+              onClick={function() {
                 setView('analytics')
                 setSelectedOrder(null)
                 // Reset delivery status for consistency
@@ -583,7 +654,9 @@ function Student2Section({ mode, actingRiderEmail }) {
             )}
             <button 
               className="btn btn-sm btn-outline-secondary mt-2"
-              onClick={() => setAssignResult(null)}
+              onClick={function() {
+                setAssignResult(null)
+              }}
             >
               Dismiss
             </button>

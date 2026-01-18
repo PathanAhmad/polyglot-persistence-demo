@@ -15,7 +15,7 @@ function AdminSection({ onClose, onAfterMigrate, onAfterImportReset }) {
   const [migrateResult, setMigrateResult] = useState(null)
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
+  useEffect(function() {
     setIsAuthed(sessionStorage.getItem(ADMIN_SESSION_KEY) === '1')
   }, [])
 
@@ -23,7 +23,7 @@ function AdminSection({ onClose, onAfterMigrate, onAfterImportReset }) {
     e.preventDefault()
     setAuthError(null)
 
-    if (accessCode.trim() !== ADMIN_ACCESS_CODE) {
+    if ( accessCode.trim() !== ADMIN_ACCESS_CODE ) {
       setAuthError('Invalid access code.')
       return
     }
@@ -63,7 +63,7 @@ function AdminSection({ onClose, onAfterMigrate, onAfterImportReset }) {
     try {
       const response = await api.post('/import_reset')
       setImportResult({ success: true, data: response.data })
-      if (typeof onAfterImportReset === 'function') {
+      if ( typeof onAfterImportReset === 'function' ) {
         await onAfterImportReset()
       }
     } catch (error) {
@@ -82,7 +82,7 @@ function AdminSection({ onClose, onAfterMigrate, onAfterImportReset }) {
     try {
       const response = await api.post('/migrate_to_mongo')
       setMigrateResult({ success: true, data: response.data })
-      if (typeof onAfterMigrate === 'function') {
+      if ( typeof onAfterMigrate === 'function' ) {
         await onAfterMigrate()
       }
     } catch (error) {
@@ -123,7 +123,9 @@ function AdminSection({ onClose, onAfterMigrate, onAfterImportReset }) {
                 className="form-control"
                 type="password"
                 value={accessCode}
-                onChange={(e) => setAccessCode(e.target.value)}
+                onChange={function(e) {
+                  setAccessCode(e.target.value)
+                }}
                 placeholder="Enter access code"
                 autoComplete="off"
                 required
