@@ -1,7 +1,7 @@
 // File flow:
-// - I recreate the schema, wipe old rows, then insert fresh demo data into MariaDB.
-// - I keep the data deterministic when SEED is set.
-// - After the SQL reset, I also clear Mongo so the app does not use stale migrated data.
+// - We recreate the schema, wipe old rows, then insert fresh demo data into MariaDB.
+// - We keep the data deterministic when SEED is set.
+// - After the SQL reset, We also clear Mongo so the app does not use stale migrated data.
 
 const { withTx } = require("../db/mariadb");
 const { config } = require("../config");
@@ -14,14 +14,14 @@ function randInt(rng, min, max) {
 
 function pick(rng, arr) {
   if ( !Array.isArray(arr) || arr.length === 0 ) {
-    // I fail loudly so empty-pick bugs are always traceable.
+    // We fail loudly so empty-pick bugs are always traceable.
     throw new Error("pick() called with empty array");
   }
   return arr[randInt(rng, 0, arr.length - 1)];
 }
 
 function makeRng(seedNumber) {
-  // I use a tiny deterministic RNG so demos are reproducible when SEED is set.
+  // We use a tiny deterministic RNG so demos are reproducible when SEED is set.
   // This is a standard LCG.
   let state = seedNumber >>> 0;
   return function rng() {
@@ -36,7 +36,7 @@ async function recreateSchema(conn) {
 }
 
 async function clearAll(conn) {
-  // I delete in FK-safe order because TRUNCATE can fail when FKs are involved.
+  // We delete in FK-safe order because TRUNCATE can fail when FKs are involved.
   const deleteOrder = [
     "menu_item_category",
     "rider_works_for",
@@ -56,7 +56,7 @@ async function clearAll(conn) {
     await conn.query(`DELETE FROM ${t}`);
   }
 
-  // I reset auto-increment counters so IDs start from 1 again after reset.
+  // We reset auto-increment counters so IDs start from 1 again after reset.
   const autoIncTables = ["person", "restaurant", "menu_item", "category", "`order`", "order_item", "payment", "delivery"];
   for ( const t of autoIncTables ) {
     await conn.query(`ALTER TABLE ${t} AUTO_INCREMENT = 1`);
@@ -66,7 +66,7 @@ async function clearAll(conn) {
 async function clearMongoAfterSqlReset() {
   const { db } = await getMongo();
 
-  // After I reset SQL, I also clear Mongo and the migration marker so the UI does not read stale data.
+  // After We reset SQL, We also clear Mongo and the migration marker so the UI does not read stale data.
   await Promise.all([
     db.collection("restaurants").deleteMany({}),
     db.collection("people").deleteMany({}),
@@ -77,7 +77,7 @@ async function clearMongoAfterSqlReset() {
 
 async function importResetMariaDb() {
   const inserted = await withTx(async function(conn) {
-    // I (1) ensure schema exists, (2) clear old data, then (3) insert fresh randomized data.
+    // We (1) ensure schema exists, (2) clear old data, then (3) insert fresh randomized data.
     await recreateSchema(conn);
     await clearAll(conn);
 
@@ -187,7 +187,7 @@ async function importResetMariaDb() {
     }
 
     // Menu items
-    // I make sure every restaurant gets at least one menu item, otherwise order generation can break.
+    // We make sure every restaurant gets at least one menu item, otherwise order generation can break.
     const menuItemTotal = 60;
     if ( restaurantIds.length > menuItemTotal ) {
       throw new Error(`Cannot generate menu items: ${restaurantIds.length} restaurants but only ${menuItemTotal} items`);
@@ -324,7 +324,7 @@ async function importResetMariaDb() {
       const createdAt = new Date(Date.now() - randInt(rng, 0, 14) * 24 * 60 * 60 * 1000);
       const status = pick(rng, ["created", "preparing", "ready", "completed"]);
 
-      // I insert the order first with total 0, then update it after I add order items.
+      // We insert the order first with total 0, then update it after We add order items.
       const o = await conn.query(
         "INSERT INTO `order` (customer_id, restaurant_id, created_at, status, total_amount) VALUES (?, ?, ?, ?, ?)",
         [customerId, restaurantId, createdAt, status, 0]

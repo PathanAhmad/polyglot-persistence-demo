@@ -1,7 +1,7 @@
 // File flow:
-// - I expose Student 1 endpoints for placing orders, paying, and generating reports.
-// - I support both MariaDB and Mongo with the same response shape.
-// - I validate inputs, write atomically, and return consistent JSON for the UI.
+// - We expose Student 1 endpoints for placing orders, paying, and generating reports.
+// - We support both MariaDB and Mongo with the same response shape.
+// - We validate inputs, write atomically, and return consistent JSON for the UI.
 
 const express = require("express");
 
@@ -31,7 +31,7 @@ function conflict(message) {
 
 
 function parseIsoDateOrNull(v, fieldName) {
-  // I accept empty values as null, otherwise I enforce a real ISO date.
+  // We accept empty values as null, otherwise We enforce a real ISO date.
   if ( v == null || String(v).trim() === "" ) {
     return null;
   }
@@ -43,7 +43,7 @@ function parseIsoDateOrNull(v, fieldName) {
 }
 
 function toPositiveInt(v, fieldName) {
-  // I keep quantities and IDs strict so they do not silently turn into weird floats.
+  // We keep quantities and IDs strict so they do not silently turn into weird floats.
   const n = Number(v);
   if ( !Number.isFinite(n) || !Number.isInteger(n) || n <= 0 ) {
     throw badRequest(`${fieldName} must be a positive integer`);
@@ -56,7 +56,7 @@ function priceToCents(price, fieldName) {
   if ( !Number.isFinite(n) || n < 0 ) {
     throw badRequest(`${fieldName} must be a non-negative number`);
   }
-  // I compute in cents to avoid floating point accumulation errors.
+  // We compute in cents to avoid floating point accumulation errors.
   return Math.round(n * 100);
 }
 
@@ -75,7 +75,7 @@ function centsToAmount(cents) {
 
 student1Router.post("/student1/sql/place_order", async function(req, res, next) {
   try {
-    // I read and validate the request body before I touch the DB.
+    // We read and validate the request body before We touch the DB.
     let customerEmail;
     
     if ( req.body?.customerEmail ) {
@@ -114,7 +114,7 @@ student1Router.post("/student1/sql/place_order", async function(req, res, next) 
     }
 
     const order = await withTx(async function(conn) {
-      // I do everything in one transaction so an order never ends up half-written.
+      // We do everything in one transaction so an order never ends up half-written.
       const customers = await conn.query(
         `
         SELECT c.customer_id AS customerId, p.name AS customerName, p.email AS customerEmail
@@ -143,7 +143,7 @@ student1Router.post("/student1/sql/place_order", async function(req, res, next) 
 
       const now = new Date();
 
-      // I insert the order with total 0, then update it after order items are inserted.
+      // We insert the order with total 0, then update it after order items are inserted.
       const o = await conn.query(
         "INSERT INTO `order` (customer_id, restaurant_id, created_at, status, total_amount) VALUES (?, ?, ?, ?, ?)",
         [customerId, restaurantId, now, "created", 0]
@@ -155,7 +155,7 @@ student1Router.post("/student1/sql/place_order", async function(req, res, next) 
 
 
       for ( let idx = 0; idx < items.length; idx++ ) {
-        // For each item, I resolve the menu item, compute the line total, and insert the row.
+        // For each item, We resolve the menu item, compute the line total, and insert the row.
         let it;
         
         if ( items[idx] ) {
@@ -269,7 +269,7 @@ student1Router.post("/student1/sql/place_order", async function(req, res, next) 
       }
 
       const totalAmount = centsToAmount(totalCents);
-      // I update the order total after inserting items so it matches the final computed sum.
+      // We update the order total after inserting items so it matches the final computed sum.
       await conn.query("UPDATE `order` SET total_amount = ? WHERE order_id = ?", [totalAmount, orderId]);
 
       return {
@@ -294,7 +294,7 @@ student1Router.post("/student1/sql/place_order", async function(req, res, next) 
 // This prevents creating unpaid orders when the user cancels the payment modal.
 student1Router.post("/student1/sql/place_and_pay", async function(req, res, next) {
   try {
-    // I read and validate the request body before I touch the DB.
+    // We read and validate the request body before We touch the DB.
     let customerEmail;
     
     if ( req.body?.customerEmail ) {
@@ -345,7 +345,7 @@ student1Router.post("/student1/sql/place_and_pay", async function(req, res, next
     }
 
     const result = await withTx(async function(conn) {
-      // I do everything in one transaction: create order + items + payment + status update.
+      // We do everything in one transaction: create order + items + payment + status update.
       const customers = await conn.query(
         `
         SELECT c.customer_id AS customerId, p.name AS customerName, p.email AS customerEmail
@@ -374,7 +374,7 @@ student1Router.post("/student1/sql/place_and_pay", async function(req, res, next
 
       const now = new Date();
 
-      // I insert the order with total 0, then update it after order items are inserted.
+      // We insert the order with total 0, then update it after order items are inserted.
       const o = await conn.query(
         "INSERT INTO `order` (customer_id, restaurant_id, created_at, status, total_amount) VALUES (?, ?, ?, ?, ?)",
         [customerId, restaurantId, now, "created", 0]
@@ -500,7 +500,7 @@ student1Router.post("/student1/sql/place_and_pay", async function(req, res, next
       const totalAmount = centsToAmount(totalCents);
       await conn.query("UPDATE `order` SET total_amount = ? WHERE order_id = ?", [totalAmount, orderId]);
 
-      // I create the payment and advance the order status in the same transaction.
+      // We create the payment and advance the order status in the same transaction.
       await conn.query("INSERT INTO payment (order_id, amount, payment_method, paid_at) VALUES (?, ?, ?, ?)", [
         orderId,
         totalAmount,
@@ -546,7 +546,7 @@ student1Router.post("/student1/sql/place_and_pay", async function(req, res, next
 
 student1Router.post("/student1/sql/pay", async function(req, res, next) {
   try {
-    // I validate the request and then either insert or update the payment record.
+    // We validate the request and then either insert or update the payment record.
     let orderId;
     
     if ( req.body?.orderId ) {
@@ -573,7 +573,7 @@ student1Router.post("/student1/sql/pay", async function(req, res, next) {
     }
 
     const payment = await withTx(async function(conn) {
-      // I keep the payment write + status update in one transaction.
+      // We keep the payment write + status update in one transaction.
       const orders = await conn.query(
         `
         SELECT order_id AS orderId, status, total_amount AS totalAmount
@@ -624,7 +624,7 @@ student1Router.post("/student1/sql/pay", async function(req, res, next) {
         );
       }
 
-      // I also move the order forward after payment (keeps the demo consistent with imported data statuses).
+      // We also move the order forward after payment (keeps the demo consistent with imported data statuses).
       await conn.query("UPDATE `order` SET status = IF(status = 'created', 'preparing', status) WHERE order_id = ?", [
         orderId
       ]);
@@ -652,7 +652,7 @@ student1Router.post("/student1/sql/pay", async function(req, res, next) {
 
 student1Router.get("/student1/sql/report", async function(req, res, next) {
   try {
-    // I build analytics with KPIs and breakdowns for the restaurant.
+    // We build analytics with KPIs and breakdowns for the restaurant.
     let restaurantName;
     
     if ( req.query.restaurantName ) {
@@ -682,7 +682,7 @@ student1Router.get("/student1/sql/report", async function(req, res, next) {
     }
 
     const result = await withConn(async function(conn) {
-      // I compute summary KPIs first.
+      // We compute summary KPIs first.
       const summaryRows = await conn.query(
         `
         SELECT
@@ -713,7 +713,7 @@ student1Router.get("/student1/sql/report", async function(req, res, next) {
         paymentRate: totalOrders > 0 ? ((paidOrders / totalOrders) * 100).toFixed(1) : 0
       };
 
-      // I compute orders by status.
+      // We compute orders by status.
       const byStatus = await conn.query(
         `
         SELECT
@@ -729,7 +729,7 @@ student1Router.get("/student1/sql/report", async function(req, res, next) {
         params
       );
 
-      // I compute orders per day for trend.
+      // We compute orders per day for trend.
       const byDay = await conn.query(
         `
         SELECT
@@ -747,7 +747,7 @@ student1Router.get("/student1/sql/report", async function(req, res, next) {
         params
       );
 
-      // I compute payment method breakdown.
+      // We compute payment method breakdown.
       const byPaymentMethod = await conn.query(
         `
         SELECT
@@ -765,7 +765,7 @@ student1Router.get("/student1/sql/report", async function(req, res, next) {
         params
       );
 
-      // I compute top 5 menu items sold.
+      // We compute top 5 menu items sold.
       const topItems = await conn.query(
         `
         SELECT
@@ -812,7 +812,7 @@ student1Router.get("/student1/sql/report", async function(req, res, next) {
 
 student1Router.post("/student1/mongo/place_order", async function(req, res, next) {
   try {
-    // I validate inputs, normalize items, then insert one order document into Mongo.
+    // We validate inputs, normalize items, then insert one order document into Mongo.
     let customerEmail;
     
     if ( req.body?.customerEmail ) {
@@ -864,7 +864,7 @@ student1Router.post("/student1/mongo/place_order", async function(req, res, next
 
     let totalCents = 0;
     const normalizedItems = items.map(function(it, idx) {
-      // I normalize each item and compute the running total in cents.
+      // We normalize each item and compute the running total in cents.
       let name;
       
       if ( it?.name != null && String(it.name).trim() !== "" ) {
@@ -902,7 +902,7 @@ student1Router.post("/student1/mongo/place_order", async function(req, res, next
     const totalAmount = centsToAmount(totalCents);
     const createdAt = new Date();
 
-    // I generate a numeric orderId (compatible with migrated data) and rely on a unique index for safety.
+    // We generate a numeric orderId (compatible with migrated data) and rely on a unique index for safety.
     let insertedOrderId = null;
     
     for ( let attempt = 0; attempt < 5; attempt++ ) {
@@ -1090,7 +1090,7 @@ student1Router.post("/student1/mongo/place_and_pay", async function(req, res, ne
     const createdAt = new Date();
     const paidAt = createdAt;
 
-    // I generate a numeric orderId (compatible with migrated data) and rely on a unique index for safety.
+    // We generate a numeric orderId (compatible with migrated data) and rely on a unique index for safety.
     let insertedOrderId = null;
     
     for ( let attempt = 0; attempt < 5; attempt++ ) {
@@ -1186,7 +1186,7 @@ student1Router.post("/student1/mongo/place_and_pay", async function(req, res, ne
 
 student1Router.post("/student1/mongo/pay", async function(req, res, next) {
   try {
-    // I update payment and status atomically with a pipeline update.
+    // We update payment and status atomically with a pipeline update.
     let orderId;
     
     if ( req.body?.orderId ) {
@@ -1214,7 +1214,7 @@ student1Router.post("/student1/mongo/pay", async function(req, res, next) {
 
     const { db } = await getMongo();
 
-    // I keep paidAt immutable: only set it if missing/null.
+    // We keep paidAt immutable: only set it if missing/null.
     const result = await db.collection("orders").updateOne(
       { orderId },
       [
@@ -1252,7 +1252,7 @@ student1Router.post("/student1/mongo/pay", async function(req, res, next) {
 
 student1Router.get("/student1/mongo/report", async function(req, res, next) {
   try {
-    // I build analytics with KPIs and breakdowns for the restaurant from Mongo.
+    // We build analytics with KPIs and breakdowns for the restaurant from Mongo.
     let restaurantName;
     
     if ( req.query.restaurantName ) {
@@ -1284,7 +1284,7 @@ student1Router.get("/student1/mongo/report", async function(req, res, next) {
       }
     }
 
-    // I compute summary KPIs.
+    // We compute summary KPIs.
     const summaryResult = await db.collection("orders").aggregate([
       { $match: match },
       {
@@ -1323,7 +1323,7 @@ student1Router.get("/student1/mongo/report", async function(req, res, next) {
       paymentRate: totalOrders > 0 ? ((paidOrders / totalOrders) * 100).toFixed(1) : 0
     };
 
-    // I compute orders by status.
+    // We compute orders by status.
     const byStatus = await db.collection("orders").aggregate([
       { $match: match },
       {
@@ -1336,7 +1336,7 @@ student1Router.get("/student1/mongo/report", async function(req, res, next) {
       { $sort: { count: -1 } }
     ]).toArray();
 
-    // I compute orders per day.
+    // We compute orders per day.
     const byDay = await db.collection("orders").aggregate([
       { $match: match },
       {
@@ -1351,7 +1351,7 @@ student1Router.get("/student1/mongo/report", async function(req, res, next) {
       { $limit: 30 }
     ]).toArray();
 
-    // I compute payment method breakdown.
+    // We compute payment method breakdown.
     const byPaymentMethod = await db.collection("orders").aggregate([
       { $match: { ...match, "payment.paidAt": { $ne: null } } },
       {
@@ -1365,7 +1365,7 @@ student1Router.get("/student1/mongo/report", async function(req, res, next) {
       { $sort: { total: -1 } }
     ]).toArray();
 
-    // I compute top 5 menu items sold.
+    // We compute top 5 menu items sold.
     const topItems = await db.collection("orders").aggregate([
       { $match: match },
       { $unwind: "$orderItems" },
@@ -1407,7 +1407,7 @@ student1Router.get("/student1/mongo/report", async function(req, res, next) {
 
 student1Router.get("/student1/mongo/orders", async function(req, res, next) {
   try {
-    // I query orders from Mongo, then map them into the same shape as the SQL endpoint.
+    // We query orders from Mongo, then map them into the same shape as the SQL endpoint.
     let customerEmail;
     
     if ( req.query.customerEmail ) {

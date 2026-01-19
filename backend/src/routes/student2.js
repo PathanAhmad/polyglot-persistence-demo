@@ -1,7 +1,7 @@
 // File flow:
-// - I expose Student 2 endpoints for assigning deliveries and reporting on deliveries.
-// - I support both MariaDB and Mongo with matching output shapes.
-// - I validate inputs, write safely, and return JSON for the UI.
+// - We expose Student 2 endpoints for assigning deliveries and reporting on deliveries.
+// - We support both MariaDB and Mongo with matching output shapes.
+// - We validate inputs, write safely, and return JSON for the UI.
 
 const express = require("express");
 
@@ -26,7 +26,7 @@ function notFound(message) {
 
 student2Router.post("/student2/sql/assign_delivery", async function(req, res, next) {
   try {
-    // I validate inputs, then insert or update the delivery row in one transaction.
+    // We validate inputs, then insert or update the delivery row in one transaction.
     let riderEmail;
     
     if ( req.body?.riderEmail ) {
@@ -65,7 +65,7 @@ student2Router.post("/student2/sql/assign_delivery", async function(req, res, ne
     }
 
     const delivery = await withTx(async function(conn) {
-      // I resolve the rider by email so the UI doesn't need internal IDs.
+      // We resolve the rider by email so the UI doesn't need internal IDs.
       const riders = await conn.query(
         `
         SELECT r.rider_id AS riderId, p.email AS email
@@ -95,14 +95,14 @@ student2Router.post("/student2/sql/assign_delivery", async function(req, res, ne
       );
 
       if ( !existing.length ) {
-        // First assignment: I set assignedAt to now.
+        // First assignment: We set assignedAt to now.
         await conn.query(
           "INSERT INTO delivery (order_id, rider_id, assigned_at, delivery_status) VALUES (?, ?, ?, ?)",
           [orderId, riderId, now, deliveryStatus]
         );
       } 
       else {
-        // Re-assign: I keep assignedAt stable if it already exists.
+        // Re-assign: We keep assignedAt stable if it already exists.
         const assignedAtWasNull = existing[0].assignedAt == null;
         let assignedAt;
         
@@ -150,7 +150,7 @@ student2Router.post("/student2/sql/assign_delivery", async function(req, res, ne
 
 student2Router.get("/student2/sql/report", async function(req, res, next) {
   try {
-    // I build analytics with KPIs and breakdowns for the rider.
+    // We build analytics with KPIs and breakdowns for the rider.
     let riderEmail;
     
     if ( req.query.riderEmail ) {
@@ -216,7 +216,7 @@ student2Router.get("/student2/sql/report", async function(req, res, next) {
     }
 
     const result = await withConn(async function(conn) {
-      // I compute summary KPIs first.
+      // We compute summary KPIs first.
       const summaryRows = await conn.query(
         `
         SELECT
@@ -252,7 +252,7 @@ student2Router.get("/student2/sql/report", async function(req, res, next) {
         completionRate: totalDeliveries > 0 ? ((delivered / totalDeliveries) * 100).toFixed(1) : 0
       };
 
-      // I compute deliveries per day.
+      // We compute deliveries per day.
       const byDay = await conn.query(
         `
         SELECT
@@ -271,7 +271,7 @@ student2Router.get("/student2/sql/report", async function(req, res, next) {
         params
       );
 
-      // I compute top restaurants by delivery count.
+      // We compute top restaurants by delivery count.
       const byRestaurant = await conn.query(
         `
         SELECT
@@ -311,7 +311,7 @@ student2Router.get("/student2/sql/report", async function(req, res, next) {
 
 student2Router.post("/student2/mongo/assign_delivery", async function(req, res, next) {
   try {
-    // I assign a delivery in Mongo and make sure assignedAt is only set once.
+    // We assign a delivery in Mongo and make sure assignedAt is only set once.
     let riderEmail;
     
     if ( req.body?.riderEmail ) {
@@ -351,19 +351,19 @@ student2Router.post("/student2/mongo/assign_delivery", async function(req, res, 
 
     const { db } = await getMongo();
 
-    // I resolve the rider from the 'people' collection (migrated from SQL).
+    // We resolve the rider from the 'people' collection (migrated from SQL).
     const rider = await db.collection("people").findOne({ type: "rider", email: riderEmail });
     if ( !rider ) {
       throw notFound("rider not found");
     }
 
-    // I do this as a pipeline update so assignedAt is set once and never overwritten.
+    // We do this as a pipeline update so assignedAt is set once and never overwritten.
     const updateResult = await db.collection("orders").updateOne(
       { orderId },
       [
         {
           $set: {
-            // Some orders start with delivery: null, so I always write the full delivery object.
+            // Some orders start with delivery: null, so We always write the full delivery object.
             delivery: {
               $let: {
                 vars: { existing: { $ifNull: ["$delivery", {}] } },
@@ -418,7 +418,7 @@ student2Router.post("/student2/mongo/assign_delivery", async function(req, res, 
 
 student2Router.get("/student2/mongo/report", async function(req, res, next) {
   try {
-    // I build analytics with KPIs and breakdowns for the rider from Mongo.
+    // We build analytics with KPIs and breakdowns for the rider from Mongo.
     let riderEmail;
     
     if ( req.query.riderEmail ) {
@@ -487,7 +487,7 @@ student2Router.get("/student2/mongo/report", async function(req, res, next) {
       }
     }
 
-    // I compute summary KPIs.
+    // We compute summary KPIs.
     const summaryResult = await db.collection("orders").aggregate([
       { $match: match },
       {
@@ -533,7 +533,7 @@ student2Router.get("/student2/mongo/report", async function(req, res, next) {
       completionRate: totalDeliveries > 0 ? ((delivered / totalDeliveries) * 100).toFixed(1) : 0
     };
 
-    // I compute deliveries per day.
+    // We compute deliveries per day.
     const byDay = await db.collection("orders").aggregate([
       { $match: match },
       {
@@ -547,7 +547,7 @@ student2Router.get("/student2/mongo/report", async function(req, res, next) {
       { $limit: 30 }
     ]).toArray();
 
-    // I compute top restaurants by delivery count.
+    // We compute top restaurants by delivery count.
     const byRestaurant = await db.collection("orders").aggregate([
       { $match: match },
       {
@@ -583,7 +583,7 @@ student2Router.get("/student2/mongo/report", async function(req, res, next) {
 
 student2Router.get("/student2/mongo/orders", async function(req, res, next) {
   try {
-    // I query orders from Mongo, then map them into the same shape as the SQL endpoint.
+    // We query orders from Mongo, then map them into the same shape as the SQL endpoint.
     let status;
     
     if ( req.query.status ) {

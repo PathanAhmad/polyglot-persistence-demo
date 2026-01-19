@@ -99,7 +99,7 @@ function App() {
         <div className="card-body">
           <div className="row g-3">
             <div className="col-md-4">
-              <label className="form-label fw-bold">I am a:</label>
+              <label className="form-label fw-bold">We am a:</label>
               <div className="btn-group w-100" role="group">
                 <button
                   type="button"

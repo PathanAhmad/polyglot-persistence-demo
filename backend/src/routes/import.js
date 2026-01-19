@@ -1,7 +1,7 @@
 // File flow:
-// - I expose endpoints to reset/import demo data into MariaDB.
-// - I return simple lookup lists (riders, customers, restaurants, menu items).
-// - I list orders with optional filters and a safe limit.
+// - We expose endpoints to reset/import demo data into MariaDB.
+// - We return simple lookup lists (riders, customers, restaurants, menu items).
+// - We list orders with optional filters and a safe limit.
 
 const express = require("express");
 
@@ -12,7 +12,7 @@ const importRouter = express.Router();
 
 importRouter.post("/import_reset", async function(_req, res, next) {
   try {
-    // I reset the SQL database back to a known demo state.
+    // We reset the SQL database back to a known demo state.
     const result = await importResetMariaDb();
     res.json({ ok: true, inserted: result });
   } 
@@ -23,7 +23,7 @@ importRouter.post("/import_reset", async function(_req, res, next) {
 
 importRouter.get("/riders", async function(_req, res, next) {
   try {
-    // I read riders joined with person so I can return name + email.
+    // We read riders joined with person so We can return name + email.
     const riders = await withConn(function(conn) {
       return conn.query(
         `
@@ -50,7 +50,7 @@ importRouter.get("/riders", async function(_req, res, next) {
 
 importRouter.get("/customers", async function(_req, res, next) {
   try {
-    // I read customers joined with person so I can return name + email.
+    // We read customers joined with person so We can return name + email.
     const customers = await withConn(function(conn) {
       return conn.query(
         `
@@ -76,7 +76,7 @@ importRouter.get("/customers", async function(_req, res, next) {
 
 importRouter.get("/restaurants", async function(_req, res, next) {
   try {
-    // I list restaurants for dropdowns and filtering in the UI.
+    // We list restaurants for dropdowns and filtering in the UI.
     const restaurants = await withConn(function(conn) {
       return conn.query(
         `
@@ -103,12 +103,12 @@ importRouter.get("/menu_items", async function(req, res, next) {
     const restaurantName = req.query.restaurantName;
     
     if ( !restaurantName ) {
-      // No restaurant selected, so I return an empty list.
+      // No restaurant selected, so We return an empty list.
       return res.json({ ok: true, menuItems: [] });
     }
 
 
-    // I fetch menu items for one restaurant name.
+    // We fetch menu items for one restaurant name.
     const menuItems = await withConn(function(conn) {
       return conn.query(
         `
@@ -137,7 +137,7 @@ importRouter.get("/menu_items", async function(req, res, next) {
 
 importRouter.get("/orders", async function(req, res, next) {
   try {
-    // I parse optional filters from the query string.
+    // We parse optional filters from the query string.
     let limitValue;
     
     if ( req.query.limit ) {
@@ -177,7 +177,7 @@ importRouter.get("/orders", async function(req, res, next) {
     const unassigned = req.query.unassigned === 'true';
     const excludeDelivered = req.query.excludeDelivered === 'true';
 
-    // I build the WHERE clause and parameters based on what filters are present.
+    // We build the WHERE clause and parameters based on what filters are present.
     const params = [];
     const whereConditions = [];
     
@@ -220,7 +220,7 @@ importRouter.get("/orders", async function(req, res, next) {
     
     let finalLimit;
     
-    // I clamp the limit so one request cannot pull the whole DB.
+    // We clamp the limit so one request cannot pull the whole DB.
     if ( Number.isFinite(limit) ) {
       finalLimit = Math.min(Math.max(limit, 1), 200);
     } 
@@ -230,7 +230,7 @@ importRouter.get("/orders", async function(req, res, next) {
     
     params.push(finalLimit);
 
-    // I return recent orders, with optional rider/delivery info via LEFT JOIN.
+    // We return recent orders, with optional rider/delivery info via LEFT JOIN.
     const orders = await withConn(function(conn) {
       return conn.query(
         `

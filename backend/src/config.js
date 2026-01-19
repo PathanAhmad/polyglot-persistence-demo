@@ -1,10 +1,10 @@
 // File flow:
-// - I read config values from env (with safe defaults).
-// - I fail fast if anything required is missing.
-// - I export one `config` object the rest of the backend uses.
+// - We read config values from env (with safe defaults).
+// - We fail fast if anything required is missing.
+// - We export one `config` object the rest of the backend uses.
 
 function mustGetEnv(name, fallback) {
-  // I read an env var, fall back if needed, then validate it is not empty.
+  // We read an env var, fall back if needed, then validate it is not empty.
   let v;
   
   if ( process.env[name] != null ) {
@@ -23,7 +23,7 @@ function mustGetEnv(name, fallback) {
 
 let portValue;
 if ( process.env.PORT ) {
-  // I keep PORT flexible so it works on local + Docker + grading setups.
+  // We keep PORT flexible so it works on local + Docker + grading setups.
   portValue = process.env.PORT;
 } 
 else {

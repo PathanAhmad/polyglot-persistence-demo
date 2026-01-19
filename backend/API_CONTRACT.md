@@ -1,6 +1,6 @@
 # Backend API Contract (MS2)
 
-This is the minimal contract the frontend can call. I keep it simple and explicit (no ORM magic).
+This is the minimal contract the frontend can call. We keep it simple and explicit (no ORM magic).
 
 ## Base
 
@@ -34,7 +34,7 @@ This is the minimal contract the frontend can call. I keep it simple and explici
 
 ### POST `/api/import_reset`
 
-I delete existing relational data and generate fresh randomized data for demos/testing.
+We delete existing relational data and generate fresh randomized data for demos/testing.
 
 **200**
 
@@ -90,7 +90,7 @@ Query params:
 
 ### POST `/api/student1/sql/place_order`
 
-I create a new order for a customer at a restaurant, insert multiple order items (weak entity), and update the order total.
+We create a new order for a customer at a restaurant, insert multiple order items (weak entity), and update the order total.
 
 Request body:
 
@@ -126,7 +126,7 @@ Request body:
 
 ### POST `/api/student1/sql/pay`
 
-I create (or finalize) the payment for an order and update the order status from `created` -> `preparing`.
+We create (or finalize) the payment for an order and update the order status from `created` -> `preparing`.
 
 Request body:
 
@@ -223,7 +223,7 @@ Same query params and same output shape as the SQL report (as close as practical
 
 ### POST `/api/student2/sql/assign_delivery`
 
-I assign a rider to an order's delivery (create delivery if missing) and update the delivery status.
+We assign a rider to an order's delivery (create delivery if missing) and update the delivery status.
 
 Request body:
 
@@ -296,7 +296,7 @@ Query params:
 
 ### POST `/api/migrate_to_mongo`
 
-I clear MongoDB collections and migrate the current MariaDB data into MongoDB documents (no re-randomizing).
+We clear MongoDB collections and migrate the current MariaDB data into MongoDB documents (no re-randomizing).
 
 **200**
 

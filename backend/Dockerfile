@@ -2,11 +2,11 @@ FROM node:20-slim
 
 WORKDIR /app
 
-# I install dependencies first so Docker can cache this layer.
+# We install dependencies first so Docker can cache this layer.
 COPY backend/package.json backend/package-lock.json ./backend/
 RUN cd backend && npm ci --omit=dev
 
-# I copy the app code and the schema file the import/reset endpoint uses.
+# We copy the app code and the schema file the import/reset endpoint uses.
 COPY backend ./backend
 COPY db/mariadb/schema.sql ./db/schema.sql
 
