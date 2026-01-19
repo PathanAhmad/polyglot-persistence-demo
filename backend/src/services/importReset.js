@@ -81,25 +81,7 @@ async function importResetMariaDb() {
     await recreateSchema(conn);
     await clearAll(conn);
 
-    let seed;
-    
-    if ( process.env.SEED ) {
-      seed = Number(process.env.SEED);
-    } 
-    else {
-      seed = Date.now();
-    }
-    
-    let finalSeed;
-    
-    if ( Number.isFinite(seed) ) {
-      finalSeed = seed;
-    } 
-    else {
-      finalSeed = Date.now();
-    }
-    
-    const rng = makeRng(finalSeed);
+    const rng = makeRng(12345); // Fixed seed for consistent randomization of orders/addresses only
 
     // Vienna-based demo data (restaurants + realistic Vienna-style addresses)
     const restaurantNames = [
@@ -137,31 +119,89 @@ async function importResetMariaDb() {
     const payMethods = ["card", "cash", "paypal"];
     const categories = ["vegan", "spicy", "dessert", "drink", "starter", "main"];
 
-    // Realistic menu item names for Vienna restaurants.
-    // NOTE: We keep this list de-duplicated to avoid ambiguous name-based menu lookups.
-    const menuItemNames = [
-      // Austrian traditional dishes
-      "Wiener Schnitzel", "Tafelspitz", "Gulasch", "Kaiserschmarrn", "Apfelstrudel",
-      "Sachertorte", "Leberkäs", "Knödel", "Spätzle", "Bratwurst",
-      "Käsespätzle", "Schweinsbraten", "Schnitzel Cordon Bleu", "Backhendl", "Zwiebelrostbraten",
-      // Cafe items
-      "Cappuccino", "Melange", "Einspänner", "Wiener Eiskaffee",
-      "Topfenstrudel", "Linzer Torte", "Mozartkugeln", "Marillenknödel", "Palatschinken",
-      // International dishes
-      "Margherita Pizza", "Carbonara", "Bolognese", "Caesar Salad", "Burger Classic",
-      "Chicken Curry", "Pad Thai", "Sushi Platter", "Fish & Chips", "Tacos",
-      "Risotto ai Funghi", "Penne Arrabbiata", "Greek Salad", "Chicken Wings", "Nachos",
-      // Starters & Sides
-      "Tomato Soup", "Onion Soup", "Caprese Salad", "Bruschetta",
-      "Garlic Bread", "French Fries", "Onion Rings", "Mozzarella Sticks", "Soup of the Day",
-      // Desserts
-      "Chocolate Cake", "Cheesecake", "Tiramisu", "Ice Cream Sundae", "Crème Brûlée",
-      "Apple Pie", "Brownie", "Panna Cotta", "Mousse au Chocolat", "Fruit Salad",
-      // Drinks
-      "Cola", "Orange Juice", "Apple Juice", "Mineral Water", "Beer",
-      "Wine", "Coffee", "Espresso", "Tea", "Lemonade",
-      "Iced Tea", "Hot Chocolate", "Smoothie", "Milkshake", "Red Bull"
-    ];
+    // Fixed menu items for each restaurant - no randomization
+    const restaurantMenus = {
+      "Figlmueller": [
+        { name: "Wiener Schnitzel", price: 18.50, categories: ["main"] },
+        { name: "Tafelspitz", price: 22.00, categories: ["main"] },
+        { name: "Apfelstrudel", price: 6.50, categories: ["dessert"] },
+        { name: "Kaiserschmarrn", price: 8.00, categories: ["dessert"] },
+        { name: "Beer", price: 4.50, categories: ["drink"] },
+        { name: "Mineral Water", price: 3.00, categories: ["drink"] }
+      ],
+      "Plachutta": [
+        { name: "Tafelspitz Classic", price: 24.00, categories: ["main"] },
+        { name: "Zwiebelrostbraten", price: 26.50, categories: ["main"] },
+        { name: "Beef Broth", price: 5.50, categories: ["starter"] },
+        { name: "Sachertorte", price: 7.00, categories: ["dessert"] },
+        { name: "Wine", price: 5.50, categories: ["drink"] },
+        { name: "Coffee", price: 3.50, categories: ["drink"] }
+      ],
+      "Cafe Central": [
+        { name: "Melange", price: 4.80, categories: ["drink"] },
+        { name: "Cappuccino", price: 4.50, categories: ["drink"] },
+        { name: "Sachertorte", price: 6.50, categories: ["dessert"] },
+        { name: "Apfelstrudel", price: 6.00, categories: ["dessert"] },
+        { name: "Breakfast Platter", price: 12.50, categories: ["main"] },
+        { name: "Club Sandwich", price: 11.00, categories: ["main"] }
+      ],
+      "Zum Schwarzen Kameel": [
+        { name: "Open Sandwich", price: 9.50, categories: ["starter"] },
+        { name: "Beef Tartare", price: 14.00, categories: ["starter"] },
+        { name: "Schnitzel", price: 19.00, categories: ["main"] },
+        { name: "Fish of the Day", price: 21.00, categories: ["main"] },
+        { name: "Champagne", price: 12.00, categories: ["drink"] },
+        { name: "Espresso", price: 3.00, categories: ["drink"] }
+      ],
+      "Lugeck": [
+        { name: "Gulasch", price: 16.50, categories: ["main"] },
+        { name: "Schweinsbraten", price: 18.00, categories: ["main"] },
+        { name: "Knödel Variety", price: 13.50, categories: ["main"] },
+        { name: "Caesar Salad", price: 11.00, categories: ["starter"] },
+        { name: "Palatschinken", price: 7.50, categories: ["dessert"] },
+        { name: "Cola", price: 3.50, categories: ["drink"] }
+      ],
+      "Steirereck": [
+        { name: "Tasting Menu", price: 145.00, categories: ["main"] },
+        { name: "Venison", price: 42.00, categories: ["main"] },
+        { name: "Trout", price: 38.00, categories: ["main"] },
+        { name: "Amuse Bouche", price: 18.00, categories: ["starter"] },
+        { name: "Cheese Selection", price: 16.00, categories: ["dessert"] },
+        { name: "Wine Pairing", price: 85.00, categories: ["drink"] }
+      ],
+      "NENI am Naschmarkt": [
+        { name: "Hummus Platter", price: 11.50, categories: ["starter", "vegan"] },
+        { name: "Falafel Bowl", price: 14.00, categories: ["main", "vegan"] },
+        { name: "Shawarma", price: 15.50, categories: ["main"] },
+        { name: "Lamb Kebab", price: 18.00, categories: ["main"] },
+        { name: "Baklava", price: 6.00, categories: ["dessert"] },
+        { name: "Mint Tea", price: 3.50, categories: ["drink"] }
+      ],
+      "Gasthaus Poeschel": [
+        { name: "Backhendl", price: 16.00, categories: ["main"] },
+        { name: "Leberkäs with Egg", price: 9.50, categories: ["main"] },
+        { name: "Potato Soup", price: 5.50, categories: ["starter"] },
+        { name: "Spätzle", price: 8.00, categories: ["main"] },
+        { name: "Marillenknödel", price: 7.50, categories: ["dessert"] },
+        { name: "Beer", price: 4.00, categories: ["drink"] }
+      ],
+      "Schnitzelwirt": [
+        { name: "Classic Schnitzel", price: 14.50, categories: ["main"] },
+        { name: "Cordon Bleu", price: 16.50, categories: ["main"] },
+        { name: "Chicken Schnitzel", price: 13.50, categories: ["main"] },
+        { name: "French Fries", price: 4.50, categories: ["starter"] },
+        { name: "Mixed Salad", price: 5.50, categories: ["starter"] },
+        { name: "Lemonade", price: 3.50, categories: ["drink"] }
+      ],
+      "Vapiano Wien Mitte": [
+        { name: "Margherita Pizza", price: 9.90, categories: ["main"] },
+        { name: "Carbonara", price: 11.90, categories: ["main"] },
+        { name: "Bolognese", price: 11.50, categories: ["main"] },
+        { name: "Caprese Salad", price: 8.50, categories: ["starter"] },
+        { name: "Tiramisu", price: 5.90, categories: ["dessert"] },
+        { name: "Iced Tea", price: 3.50, categories: ["drink"] }
+      ]
+    };
 
     // Restaurants
     const restaurantIds = [];
@@ -186,84 +226,36 @@ async function importResetMariaDb() {
       categoryIdByName.set(c, Number(r.insertId));
     }
 
-    // Menu items
-    // We make sure every restaurant gets at least one menu item, otherwise order generation can break.
-    const menuItemTotal = 60;
-    if ( restaurantIds.length > menuItemTotal ) {
-      throw new Error(`Cannot generate menu items: ${restaurantIds.length} restaurants but only ${menuItemTotal} items`);
-    }
-
+    // Menu items - fixed per restaurant
     const menuItemIds = [];
     const itemsByRestaurantId = new Map(restaurantIds.map(function(rid) {
       return [rid, []];
     }));
-    const usedMenuItemNamesByRestaurantId = new Map(restaurantIds.map(function(rid) {
-      return [rid, new Set()];
-    }));
 
-    for ( let i = 0; i < menuItemTotal; i++ ) {
-      // First N items cover all restaurants; remaining items are randomized.
-      let restaurantId;
-      
-      if ( i < restaurantIds.length ) {
-        restaurantId = restaurantIds[i];
-      } 
-      else {
-        restaurantId = pick(rng, restaurantIds);
-      }
-      // Make menu item names unique per restaurant so name-based lookups are never ambiguous.
-      const usedNames = usedMenuItemNamesByRestaurantId.get(restaurantId);
-      let name = null;
+    for ( let i = 0; i < restaurantNames.length; i++ ) {
+      const restaurantName = restaurantNames[i];
+      const restaurantId = restaurantIds[i];
+      const menuItems = restaurantMenus[restaurantName];
 
-      for ( let attempt = 0; attempt < 200; attempt++ ) {
-        const candidate = pick(rng, menuItemNames);
-        if ( !usedNames.has(candidate) ) {
-          name = candidate;
-          break;
-        }
-      }
-      if ( !name ) {
-        for ( const candidate of menuItemNames ) {
-          if ( !usedNames.has(candidate) ) {
-            name = candidate;
-            break;
+      for ( const item of menuItems ) {
+        const r = await conn.query(
+          "INSERT INTO menu_item (restaurant_id, name, description, price) VALUES (?, ?, ?, ?)",
+          [restaurantId, item.name, `Delicious ${item.name.toLowerCase()}`, item.price]
+        );
+        const menuItemId = Number(r.insertId);
+        const mi = { menuItemId, restaurantId, price: item.price };
+        menuItemIds.push(mi);
+        itemsByRestaurantId.get(restaurantId).push(mi);
+
+        // Add categories for this item
+        for ( const categoryName of item.categories ) {
+          const categoryId = categoryIdByName.get(categoryName);
+          if ( categoryId ) {
+            await conn.query("INSERT INTO menu_item_category (menu_item_id, category_id) VALUES (?, ?)", [
+              menuItemId,
+              categoryId
+            ]);
           }
-        }
-      }
-      if ( !name ) {
-        // Extremely unlikely given our pool size, but keep correctness if the pool is exhausted.
-        const base = pick(rng, menuItemNames);
-        let suffix = 2;
-        while ( usedNames.has(`${base} (${suffix})`) ) {
-          suffix++;
-        }
-        name = `${base} (${suffix})`;
-      }
-      usedNames.add(name);
-      const description = `Delicious ${name.toLowerCase()}`;
-      const price = (randInt(rng, 500, 2500) / 100).toFixed(2);
-      const r = await conn.query(
-        "INSERT INTO menu_item (restaurant_id, name, description, price) VALUES (?, ?, ?, ?)",
-        [restaurantId, name, description, price]
-      );
-      const menuItemId = Number(r.insertId);
-      const mi = { menuItemId, restaurantId, price: Number(price) };
-      menuItemIds.push(mi);
-      itemsByRestaurantId.get(restaurantId).push(mi);
-
-      // 1-2 categories per item
-      const c1 = pick(rng, categories);
-      await conn.query("INSERT INTO menu_item_category (menu_item_id, category_id) VALUES (?, ?)", [
-        menuItemId,
-        categoryIdByName.get(c1)
-      ]);
-      if ( rng() < 0.3 ) {
-        const c2 = pick(rng, categories);
-        if ( c2 !== c1 ) {
-          await conn.query("INSERT INTO menu_item_category (menu_item_id, category_id) VALUES (?, ?)", [
-            menuItemId,
-            categoryIdByName.get(c2)
-          ]);
         }
       }
     }

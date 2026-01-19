@@ -30,7 +30,6 @@ services:
       MONGODB_URI: mongodb://mongodb:27017
       MONGODB_DB: ms2
       SCHEMA_SQL_PATH: /app/db/schema.sql
-      SEED: 12345
     depends_on:
       - mariadb
       - mongodb
