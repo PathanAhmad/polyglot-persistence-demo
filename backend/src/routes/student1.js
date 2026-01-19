@@ -1174,7 +1174,7 @@ student1Router.post("/student1/mongo/place_and_pay", async function(req, res, ne
     res.json({
       ok: true,
       order,
-      payment: { orderId: insertedOrderId, amount: totalAmount, method: paymentMethod, paidAt }
+      payment: { paymentId: null, orderId: insertedOrderId, amount: totalAmount, method: paymentMethod, paidAt }
     });
   } 
   catch (e) {
