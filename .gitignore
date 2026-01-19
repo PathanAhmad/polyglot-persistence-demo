@@ -20,6 +20,9 @@ Thumbs.db
 MS2_PLAN.md
 Template MS2 2025W - Latex/
 
+# Frontend build output (Vite)
+frontend/dist/
+
 # Course PDFs (not part of the submission ZIP)
 Guidelines_ISE_2025-10-02-1.pdf
 ISE_QA_2_2025W.pdf
