@@ -7,6 +7,7 @@ const express = require("express");
 
 const { withTx, withConn } = require("../db/mariadb");
 const { getMongo } = require("../db/mongodb");
+const { toJsonSafeNumber, toMoneyString } = require("../utils/json");
 
 const student2Router = express.Router();
 
@@ -237,23 +238,23 @@ student2Router.get("/student2/sql/report", async function(req, res, next) {
       );
 
       const summary = summaryRows[0];
-      const totalDeliveries = Number(summary.totalDeliveries);
-      const delivered = Number(summary.delivered);
+      const totalDeliveriesNum = Number(summary.totalDeliveries);
+      const deliveredNum = Number(summary.delivered);
 
       const summaryData = {
-        totalDeliveries,
-        totalRevenue: Number(summary.totalRevenue).toFixed(2),
-        avgOrderValue: Number(summary.avgOrderValue).toFixed(2),
+        totalDeliveries: toJsonSafeNumber(summary.totalDeliveries, "summary.totalDeliveries"),
+        totalRevenue: toMoneyString(summary.totalRevenue, "summary.totalRevenue"),
+        avgOrderValue: toMoneyString(summary.avgOrderValue, "summary.avgOrderValue"),
         byStatus: {
-          assigned: Number(summary.assigned),
-          picked_up: Number(summary.pickedUp),
-          delivered
+          assigned: toJsonSafeNumber(summary.assigned, "summary.byStatus.assigned"),
+          picked_up: toJsonSafeNumber(summary.pickedUp, "summary.byStatus.pickedUp"),
+          delivered: toJsonSafeNumber(summary.delivered, "summary.byStatus.delivered")
         },
-        completionRate: totalDeliveries > 0 ? ((delivered / totalDeliveries) * 100).toFixed(1) : 0
+        completionRate: totalDeliveriesNum > 0 ? ((deliveredNum / totalDeliveriesNum) * 100).toFixed(1) : 0
       };
 
       // We compute deliveries per day.
-      const byDay = await conn.query(
+      const byDayRows = await conn.query(
         `
         SELECT
           DATE(o.created_at) AS date,
@@ -270,9 +271,12 @@ student2Router.get("/student2/sql/report", async function(req, res, next) {
         `,
         params
       );
+      const byDay = byDayRows.map(function(r) {
+        return { date: r.date, deliveries: toJsonSafeNumber(r.deliveries, "byDay.deliveries") };
+      });
 
       // We compute top restaurants by delivery count.
-      const byRestaurant = await conn.query(
+      const byRestaurantRows = await conn.query(
         `
         SELECT
           rest.name AS restaurant,
@@ -290,6 +294,9 @@ student2Router.get("/student2/sql/report", async function(req, res, next) {
         `,
         params
       );
+      const byRestaurant = byRestaurantRows.map(function(r) {
+        return { restaurant: r.restaurant, count: toJsonSafeNumber(r.count, "byRestaurant.count") };
+      });
 
       return {
         summary: summaryData,
