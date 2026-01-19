@@ -137,6 +137,31 @@ async function importResetMariaDb() {
     const payMethods = ["card", "cash", "paypal"];
     const categories = ["vegan", "spicy", "dessert", "drink", "starter", "main"];
 
+    // Realistic menu item names for Vienna restaurants
+    const menuItemNames = [
+      // Austrian traditional dishes
+      "Wiener Schnitzel", "Tafelspitz", "Gulasch", "Kaiserschmarrn", "Apfelstrudel",
+      "Sachertorte", "Leberkäs", "Knödel", "Spätzle", "Bratwurst",
+      "Käsespätzle", "Schweinsbraten", "Schnitzel Cordon Bleu", "Backhendl", "Zwiebelrostbraten",
+      // Cafe items
+      "Cappuccino", "Melange", "Einspänner", "Wiener Eiskaffee", "Sachertorte",
+      "Topfenstrudel", "Linzer Torte", "Mozartkugeln", "Marillenknödel", "Palatschinken",
+      // International dishes
+      "Margherita Pizza", "Carbonara", "Bolognese", "Caesar Salad", "Burger Classic",
+      "Chicken Curry", "Pad Thai", "Sushi Platter", "Fish & Chips", "Tacos",
+      "Risotto ai Funghi", "Penne Arrabbiata", "Greek Salad", "Chicken Wings", "Nachos",
+      // Starters & Sides
+      "Tomato Soup", "Onion Soup", "Caesar Salad", "Caprese Salad", "Bruschetta",
+      "Garlic Bread", "French Fries", "Onion Rings", "Mozzarella Sticks", "Soup of the Day",
+      // Desserts
+      "Chocolate Cake", "Cheesecake", "Tiramisu", "Ice Cream Sundae", "Crème Brûlée",
+      "Apple Pie", "Brownie", "Panna Cotta", "Mousse au Chocolat", "Fruit Salad",
+      // Drinks
+      "Cola", "Orange Juice", "Apple Juice", "Mineral Water", "Beer",
+      "Wine", "Coffee", "Espresso", "Tea", "Lemonade",
+      "Iced Tea", "Hot Chocolate", "Smoothie", "Milkshake", "Red Bull"
+    ];
+
     // Restaurants
     const restaurantIds = [];
     for ( let i = 0; i < 10; i++ ) {
@@ -182,8 +207,8 @@ async function importResetMariaDb() {
       else {
         restaurantId = pick(rng, restaurantIds);
       }
-      const name = `Item ${i + 1}`;
-      const description = `Tasty ${name.toLowerCase()}`;
+      const name = pick(rng, menuItemNames);
+      const description = `Delicious ${name.toLowerCase()}`;
       const price = (randInt(rng, 500, 2500) / 100).toFixed(2);
       const r = await conn.query(
         "INSERT INTO menu_item (restaurant_id, name, description, price) VALUES (?, ?, ?, ?)",

@@ -100,7 +100,7 @@ Request body:
   "restaurantName": "Plachutta",
   "items": [
     { "menuItemId": 1, "quantity": 2 },
-    { "menuItemName": "Item 5", "quantity": 1 }
+    { "menuItemName": "Wiener Schnitzel", "quantity": 1 }
   ]
 }
 ```
@@ -118,7 +118,7 @@ Request body:
     "restaurant": { "name": "Plachutta", "address": "Kaerntner Strasse 10, 1010 Wien" },
     "customer": { "name": "Customer 1", "email": "customer1@example.com" },
     "orderItems": [
-      { "menuItemId": 1, "name": "Item 1", "quantity": 2, "unitPrice": 9.5 }
+      { "menuItemId": 1, "name": "Tafelspitz", "quantity": 2, "unitPrice": 9.5 }
     ]
   }
 }
@@ -194,7 +194,7 @@ Request body:
   "customerEmail": "customer1@example.com",
   "restaurantName": "Plachutta",
   "items": [
-    { "menuItemId": 1, "name": "Item 1", "quantity": 2, "unitPrice": 9.5 }
+    { "menuItemId": 1, "name": "Gulasch", "quantity": 2, "unitPrice": 9.5 }
   ]
 }
 ```
