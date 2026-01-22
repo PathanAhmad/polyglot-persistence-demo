@@ -1,10 +1,10 @@
 # MongoDB (NoSQL) Design
 
-*Disclaimer: AI (Deepseek) was used to correct grammar, ensure language consistency, and improve phrasing to avoid monotony. The content and design decisions and this document as a whole were developed by us and not blatantly auto-generated*
-
 ## Overview
 
-This document explains how we organized our data in MongoDB and the reasoning behind our choices.
+This document explains how the SQL schema is represented in MongoDB after migration, and why specific embedding/denormalization choices were made.
+
+The goal of the MongoDB model is a **read-optimized shape** for the API endpoints and reports, while keeping **historical order data accurate**.
 
 ---
 
@@ -12,11 +12,12 @@ This document explains how we organized our data in MongoDB and the reasoning be
 
 ### Restaurants Collection
 
-When we migrate from SQL, we bring over the basic restaurant information - ID, name, and address. Pretty straightforward.
+During migration from SQL, we copy the restaurant’s stable attributes (ID, name, address).
 
-One thing we decided NOT to migrate was the menu items table. Why? Well, in a real food delivery app, menu prices change all the time. If we stored menu items separately and then referenced them from orders, old orders might show wrong prices if the menu gets updated. So instead, we just copy the item details directly into each order when it's placed. That way, historical orders always show what the customer actually paid.
+We intentionally do **not** use the SQL `menu_item` table as a first-class MongoDB collection for the API. Menu prices change over time; if orders referenced “live” menu items, historical orders could display the wrong unit prices. Instead, we snapshot item details into each order at creation time so order history remains consistent.
 
 **Example structure:**
+
 ```javascript
 {
   _id: ObjectId,
@@ -30,11 +31,12 @@ One thing we decided NOT to migrate was the menu items table. Why? Well, in a re
 
 ### People Collection
 
-We put both customers and riders into one collection called "people". Each person has a type field that tells us whether they're a customer, rider, or just a generic person.
+Customers and riders are stored in a single `people` collection with a discriminator field (`type`).
 
-Why combine them? Mainly because they share a lot of common information (name, email, phone), and it makes lookups simpler. When we need to find someone by email, we just search one place. Then depending on their type, they'll have additional fields - customers have their default address and payment preferences, while riders have their vehicle type and rating.
+This keeps common fields (name/email/phone) in one place and simplifies lookups (for example, finding a person by email). Role-specific attributes are nested under `customer` or `rider`.
 
 **Example structure:**
+
 ```javascript
 {
   _id: ObjectId,
@@ -60,13 +62,17 @@ Why combine them? Mainly because they share a lot of common information (name, e
 
 ### Orders Collection
 
-Each order document contains pretty much everything related to that order - the items, payment info, and delivery details.
+Each order document contains everything required to render an order and run reports without joins:
 
-In SQL, we'd have orders spread across multiple tables (orders, order_items, payments, deliveries), and we'd need to join them all together whenever we want to see the full picture. In MongoDB, we just load one document and we have everything.
+- embedded `orderItems`
+- embedded `payment`
+- embedded `delivery` (including the assigned rider snapshot)
+- snapshots of `restaurant` and `customer` at order time
 
-We also store "snapshots" of the restaurant and customer info directly in each order. So even if a restaurant changes its name or a customer updates their email, old orders still show what the information was at the time. This is really useful for reports and order history.
+Snapshotting is important: if a restaurant name/address changes or a customer updates contact details, historical orders should still show the original state at the time the order was placed.
 
 **Example structure:**
+
 ```javascript
 {
   _id: ObjectId,
@@ -127,25 +133,25 @@ We also store "snapshots" of the restaurant and customer info directly in each o
 
 ## Key Design Decisions
 
-**Denormalization (copying data):** In traditional SQL databases, you normalize data to avoid duplication. In MongoDB, we often do the opposite - we duplicate information where it makes sense. For example, we copy restaurant and customer details into each order. This might seem wasteful, but it makes queries much faster and simpler since everything you need is in one place.
+**Denormalization (copying data):** In MongoDB we duplicate a small amount of data to avoid repeated joins/lookups for read-heavy endpoints. In this project, restaurant/customer snapshots inside orders make common queries and reporting straightforward.
 
-**Embedding vs. Referencing:** We chose to embed order items, payments, and deliveries directly inside order documents rather than storing them in separate collections. This makes sense because these things are tightly coupled to their order - you'd never look at a payment without caring about which order it belongs to. On the other hand, we keep people and restaurants as separate collections because they exist independently and might be looked up on their own.
+**Embedding vs. referencing:** Order-related entities (items, payment, delivery) are embedded because they are tightly coupled to the order lifecycle. People and restaurants remain separate collections because they are independently queried.
 
-**Historical accuracy:** By snapshotting data at the time of the order, we preserve what actually happened, even if things change later. This is particularly important for business reporting and auditing.
+**Historical accuracy:** Snapshots preserve what actually happened at order time (prices, restaurant/customer identity), which is important for order history and reports.
 
 ---
 
 ## Query Examples
 
-Here are some examples of how we actually query the data in MongoDB. These show how the document structure makes common operations straightforward.
-
 **Looking up a person by email:**
+
 ```javascript
 db.people.findOne({ type: "customer", email: "customer1@example.com" })
 db.people.findOne({ type: "rider", email: "rider1@example.com" })
 ```
 
 **Finding orders for a specific restaurant (with optional date filter):**
+
 ```javascript
 db.orders.find({
   "restaurant.name": "Plachutta",
@@ -153,9 +159,8 @@ db.orders.find({
 }).sort({ createdAt: -1 })
 ```
 
-Notice how we can filter directly on `restaurant.name` even though restaurant is nested inside the order. That's the benefit of embedding - no joins needed.
-
 **Finding orders for a specific rider:**
+
 ```javascript
 db.orders.find({
   "delivery.rider.email": "rider1@example.com",
@@ -163,46 +168,45 @@ db.orders.find({
 }).sort({ "delivery.assignedAt": -1 })
 ```
 
-Same thing here - we can query nested fields directly.
-
 ---
 
 ## Performance & Indexing
 
 ### Why indexes matter
 
-Without indexes, MongoDB would have to scan through every single document to find what you're looking for. That's fine with 10 orders, but with 10,000 it gets slow. Indexes are like a book's table of contents - they let MongoDB jump straight to the relevant documents.
-
-*Note: For this assignment's use case and data volume, indexes aren't strictly necessary - queries would run fast enough without them. However, we included them as good practice and proper database design. We didn't want to cut corners and submit work that wouldn't scale or follow real-world best practices.*
+Without indexes, MongoDB must scan documents to satisfy filters. Indexes make lookups and report queries scale by allowing MongoDB to jump to the relevant subset.
 
 ### What we indexed
 
-We created indexes for the most common query patterns:
+We created indexes that match the application’s query patterns:
 
 **Basic lookups:**
-- Finding orders by order ID (for payment and delivery operations)
-- Finding restaurants by name
-- Finding people by email
+- orders by order ID (used by payment and delivery operations)
+- restaurants by name
+- people by email
 
-These are unique indexes, which also helps ensure data integrity - no duplicate emails or order IDs.
+These are unique indexes to also prevent duplicates.
 
 **Reporting queries:**
-- Orders by restaurant name (for restaurant performance reports)
-- Orders by rider email and delivery status (for rider performance reports)
+- orders by restaurant name
+- orders by rider email and delivery status
 
-These indexes match the filters that our report endpoints use frequently.
+### How we verify index usage
 
-### How we verify it works
+MongoDB’s `explain()` shows whether a query uses an index (IXSCAN) or scans the full collection (COLLSCAN).
 
-MongoDB has a built-in `explain()` function that shows you exactly what it's doing when you run a query. We can check whether MongoDB is using our indexes (good) or scanning the entire collection (bad).
-
-For example:
 ```javascript
 db.orders.find({ "restaurant.name": "Plachutta" }).explain("executionStats")
 ```
 
-If this shows an index scan (IXSCAN), we know it's fast. If it shows a collection scan (COLLSCAN), we'd need to add or fix an index.
+---
 
-### Migration tracking
+## Migration tracking
 
-After migrating data from SQL to MongoDB, we save a little metadata document that records when the migration happened and how many documents were migrated. The system health endpoint returns this information, which the frontend uses to automatically switch to "Mongo mode" and show a badge indicating the data source.
+After migrating data from SQL to MongoDB, the system stores a small metadata document that records when migration happened and how many documents were migrated. The `/api/health` endpoint returns this info, and the frontend uses it to automatically display the active data source.
+
+---
+
+## Notes on tooling
+
+AI tooling was used only for light language editing; the design decisions and implementation were made and verified by the authors.
